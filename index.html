@@ -22,6 +22,7 @@
 //# sourceMappingURL=chart.umd.js.map
 
 </script>
+
 <style>
 :root {
   --bg: #f5f4f0;
@@ -585,16 +586,31 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
 
 </div><!-- /main -->
 
+
 <script>
+function importData(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Format invalide');
+      history = data;
+      try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){}
+      loadCurrentWeek(); renderPrestaInputs(); renderPrestaCards();
+      renderAsinTable(); updateCharts();
+      if(history.length > 0) updateEvoCharts();
+      alert('✓ ' + history.length + ' semaine(s) importée(s).');
+    } catch(err) { alert('Erreur: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
 // ── STATE ──
 let currentShop = 'US';
 // ── DATA BOOTSTRAP (injected on save) ──
-let _embeddedData = null;
-try {
-  const tag = document.querySelector('script[data-wp]');
-  if (tag) _embeddedData = JSON.parse(tag.textContent);
-} catch(e) {}
-let history = _embeddedData || (function(){ try { return JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { return []; } })();
+let history = (function(){ try { return JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { return []; } })();
+if (!history.length) history = [{"week": "2026-W21", "shops": {"US": {"sessions": "3867", "add_to_cart": "152", "transactions": "124", "revenue": "17133.70", "carts_created": "3783", "carts_abandoned": "254", "cvr": "3.21", "atcRate": "3.9", "aov": "138", "abandon": "6.7"}, "EU": {}, "CA": {}, "UK": {}}, "amazon": {"avgBB": null, "orders": 0}, "amazonASINs": {"US": [], "EU": []}}, {"week": "2026-W20", "shops": {"US": {"sessions": "3697", "transactions": "109", "cvr": "2.95"}, "EU": {}, "CA": {}, "UK": {}}, "amazon": {"avgBB": null, "orders": 0}, "amazonASINs": {"US": [], "EU": []}}];
 
 const shops = ['US', 'EU', 'CA', 'UK'];
 const shopColors = { US: '#F15A29', EU: '#4a9eff', CA: '#2ecc8a', UK: '#a78bfa' };
@@ -970,8 +986,7 @@ function saveWeek() {
   try { try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){} } catch(e) {}
   updateCharts();
   updateEvoCharts();
-  saveToFile();
-  alert(`✓ Semaine ${week} enregistrée. Le fichier mis à jour a été téléchargé — remplace l'ancien par ce nouveau fichier.`);
+  alert('✓ Semaine ' + week + ' enregistrée.');
 }
 
 // ── EXPORT ──
@@ -1099,26 +1114,12 @@ function updateCharts() {
 
 // ── SAVE TO FILE ──
 function saveToFile() {
-  try {
-    const dataJson = JSON.stringify(history);
-    // Get current file HTML
-    let html = document.documentElement.outerHTML;
-    // Remove any previously embedded data script
-    html = html.replace(/<script data-wp[^>]*>[\s\S]*?<\/script>/g, '');
-    // Inject fresh data before </body>
-    const dataScript = `<script data-wp="1" type="application/json">${dataJson}<\/script>`;
-    html = html.replace('</body>', dataScript + '\n</body>');
-    // Download
-    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'wellputt-kpi-dashboard-light.html';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  } catch(e) {
-    console.error('saveToFile error:', e);
-  }
+  var dataJson = JSON.stringify(history, null, 2);
+  var blob = new Blob([dataJson], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'wellputt-data.json'; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
 }
 
 // ── CLEAR DATA ──
@@ -1327,13 +1328,16 @@ function loadCurrentWeek() {
 }
 
 // ── INIT ──
-initWeekPicker();
-loadCurrentWeek();
-renderPrestaInputs();
-renderPrestaCards();
-renderAsinTable();
-updateCharts();
-// Evo charts render on tab click to avoid hidden canvas issues
+document.addEventListener('DOMContentLoaded', function() {
+  initWeekPicker();
+  loadCurrentWeek();
+  renderPrestaInputs();
+  renderPrestaCards();
+  renderAsinTable();
+  updateAmazonCards();
+  updateCharts();
+});
+
 </script>
 </body>
 </html>
