@@ -336,11 +336,7 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
     <label>Semaine</label>
     <input type="week" id="weekPicker" onchange="loadCurrentWeek(); renderPrestaInputs(); renderPrestaCards(); renderAsinTable();">
     <button class="btn-primary" onclick="saveWeek()">Enregistrer & Sauvegarder</button>
-    <button class="btn-secondary" onclick="saveToFile()">💾 Exporter données</button>
-    <label class="btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">
-      📂 Importer données
-      <input type="file" accept=".json" style="display:none" onchange="importData(this)">
-    </label>
+    <button class="btn-secondary" onclick="saveToFile()">💾 Sauvegarder</button>
     <button class="btn-secondary" style="color:var(--red);border-color:var(--red)" onclick="clearData()">Effacer données</button>
   </div>
 </div>
@@ -590,7 +586,6 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
 </div><!-- /main -->
 
 <script>
-
 // ── STATE ──
 let currentShop = 'US';
 // ── DATA BOOTSTRAP (injected on save) ──
@@ -705,21 +700,10 @@ function renderPrestaCards() {
       : values[0].val;
     const numVal = parseFloat(mainVal);
     let deltaClass = 'neutral', deltaText = 'En attente de données';
-    if (!isNaN(numVal)) {
-      if (m.target) {
-        const ok = m.inverted ? numVal < 70 : numVal >= m.target;
-        deltaClass = ok ? 'up' : 'down';
-        deltaText = ok ? `✓ Objectif atteint (${m.target}${m.suffix})` : `Objectif : ${m.target}${m.suffix}`;
-      } else if (m.key === 'aov') {
-        deltaClass = 'neutral';
-        deltaText = 'Suivi hebdo';
-      } else if (m.key === 'abandon') {
-        deltaClass = numVal < 70 ? 'up' : 'down';
-        deltaText = numVal < 70 ? '✓ Bon taux (< 70%)' : `À améliorer (objectif < 70%)`;
-      } else {
-        deltaClass = 'neutral';
-        deltaText = '';
-      }
+    if (m.target && !isNaN(numVal)) {
+      const ok = m.inverted ? numVal < 70 : numVal >= m.target;
+      deltaClass = ok ? 'up' : 'down';
+      deltaText = ok ? `✓ Objectif atteint (${m.target}${m.suffix})` : `Objectif : ${m.target}${m.suffix}`;
     }
     card.innerHTML = `
       <div class="sc-label">${m.label}</div>
@@ -987,7 +971,7 @@ function saveWeek() {
   updateCharts();
   updateEvoCharts();
   saveToFile();
-  alert('✓ Semaine ' + week + ' enregistrée. Clique "💾 Exporter données" pour sauvegarder.');
+  alert(`✓ Semaine ${week} enregistrée. Le fichier mis à jour a été téléchargé — remplace l'ancien par ce nouveau fichier.`);
 }
 
 // ── EXPORT ──
@@ -1114,45 +1098,65 @@ function updateCharts() {
 }
 
 // ── SAVE TO FILE ──
-function importData(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if (!Array.isArray(imported)) throw new Error('Format invalide');
-      history = imported;
-      try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){}
-      loadCurrentWeek();
-      renderPrestaInputs();
-      renderPrestaCards();
-      renderAsinTable();
-      updateCharts();
-      if(history.length>0) updateEvoCharts();
-      alert('✓ ' + history.length + ' semaine(s) importée(s).');
-    } catch(err) {
-      alert('Erreur import: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
 function saveToFile() {
   try {
-    const dataJson = JSON.stringify(history, null, 2);
-    const blob = new Blob([dataJson], {type: 'application/json'});
+    const dataJson = JSON.stringify(history);
+    // Get current file HTML
+    let html = document.documentElement.outerHTML;
+    // Remove any previously embedded data script
+    html = html.replace(/<script data-wp[^>]*>[\s\S]*?<\/script>/g, '');
+    // Inject fresh data before </body>
+    const dataScript = `<script data-wp="1" type="application/json">${dataJson}<\/script>`;
+    html = html.replace('</body>', dataScript + '\n</body>');
+    // Download
+    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'wellputt-data.json';
+    a.download = 'wellputt-kpi-dashboard-light.html';
     a.click();
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch(e) {
-    alert('Erreur export: ' + e.message);
+    console.error('saveToFile error:', e);
   }
 }
 
+// ── CLEAR DATA ──
+function clearData() {
+  const options = ['Semaine en cours uniquement', 'Amazon — marché affiché', 'Tout l\'historique'];
+  const choice = prompt(
+    'Que voulez-vous effacer ?\n\n' +
+    '1 — Semaine en cours uniquement (' + getWeek() + ')\n' +
+    '2 — Amazon : marché affiché (' + amazonMarket + ')\n' +
+    '3 — Tout l\'historique (irréversible)\n\n' +
+    'Entrez 1, 2 ou 3 :'
+  );
+  if (choice === '1') {
+    const week = getWeek();
+    history = history.filter(h => h.week !== week);
+    try { try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){} } catch(e) {}
+    shops.forEach(s => { prestaData[s] = {}; prestaFields.forEach(f => prestaData[s][f] = ''); });
+    renderPrestaInputs(); renderPrestaCards(); updateCharts();
+    if(history.length>0) updateEvoCharts();
+    alert('✓ Semaine ' + week + ' effacée.');
+  } else if (choice === '2') {
+    const m = amazonMarket === 'ALL' ? 'US' : amazonMarket;
+    amazonASINs[m] = [];
+    renderAsinTable(); updateAmazonCards();
+    alert('✓ ASINs ' + m + ' effacés.');
+  } else if (choice === '3') {
+    if (!confirm('Supprimer TOUT l\'historique ? Cette action est irréversible.')) return;
+    history = [];
+    try { localStorage.removeItem('wp_kpi_history'); } catch(e) {}
+    history = [];
+    shops.forEach(s => { prestaData[s] = {}; prestaFields.forEach(f => prestaData[s][f] = ''); });
+    amazonASINs = { US: [], EU: [] };
+    renderPrestaInputs(); renderPrestaCards(); renderAsinTable(); updateAmazonCards(); updateCharts();
+    const m = document.getElementById('noDataMsg'); if(m) m.style.display='block';
+    saveToFile();
+    alert('✓ Historique effacé.');
+  }
+}
 
 // ── EVO SHOPS FILTER ──
 let evoShops = ['US','EU','CA','UK'];
@@ -1166,21 +1170,20 @@ function toggleEvoShop(shop, el) {
 // ── DEMO DATA ──
 function loadDemoData() {
   const weeks = ['2026-W16','2026-W17','2026-W18','2026-W19','2026-W20'];
-  const demo = weeks.map(function(w, i) { return {
+  const demo = weeks.map((w, i) => ({
     week: w,
     shops: {
-      US: { sessions: 8200+i*300, transactions: 180+i*12, revenue: 28000+i*1800, carts_created: 620+i*30, carts_abandoned: 430+i*10, cvr: (2.2+i*0.12).toFixed(2), atcRate: (10.0+i*0.3).toFixed(1), aov: (155+i*5).toFixed(0), abandon: (69-i*0.8).toFixed(1) },
-      EU: { sessions: 5400+i*200, transactions: 110+i*8, revenue: 19000+i*1200, carts_created: 390+i*20, carts_abandoned: 275+i*8, cvr: (2.0+i*0.10).toFixed(2), atcRate: (9.1+i*0.2).toFixed(1), aov: (173+i*4).toFixed(0), abandon: (70-i*0.6).toFixed(1) },
-      CA: { sessions: 2100+i*90, transactions: 42+i*4, revenue: 7200+i*500, carts_created: 150+i*10, carts_abandoned: 105+i*5, cvr: (2.0+i*0.08).toFixed(2), atcRate: (8.8+i*0.25).toFixed(1), aov: (171+i*3).toFixed(0), abandon: (70-i*0.5).toFixed(1) },
-      UK: { sessions: 1800+i*70, transactions: 35+i*3, revenue: 6100+i*400, carts_created: 125+i*8, carts_abandoned: 88+i*4, cvr: (1.9+i*0.09).toFixed(2), atcRate: (8.6+i*0.2).toFixed(1), aov: (174+i*3).toFixed(0), abandon: (70-i*0.4).toFixed(1) }
+      US: { sessions: 8200+i*300, add_to_cart: 820+i*40, transactions: 180+i*12, revenue: 28000+i*1800, carts_created: 620+i*30, carts_abandoned: 430+i*10, cvr: (2.2+i*0.12).toFixed(2), atcRate: (10.0+i*0.3).toFixed(1), aov: (155+i*5).toFixed(0), abandon: (69-i*0.8).toFixed(1) },
+      EU: { sessions: 5400+i*200, add_to_cart: 490+i*25, transactions: 110+i*8, revenue: 19000+i*1200, carts_created: 390+i*20, carts_abandoned: 275+i*8, cvr: (2.0+i*0.10).toFixed(2), atcRate: (9.1+i*0.2).toFixed(1), aov: (173+i*4).toFixed(0), abandon: (70-i*0.6).toFixed(1) },
+      CA: { sessions: 2100+i*90, add_to_cart: 185+i*12, transactions: 42+i*4, revenue: 7200+i*500, carts_created: 150+i*10, carts_abandoned: 105+i*5, cvr: (2.0+i*0.08).toFixed(2), atcRate: (8.8+i*0.25).toFixed(1), aov: (171+i*3).toFixed(0), abandon: (70-i*0.5).toFixed(1) },
+      UK: { sessions: 1800+i*70, add_to_cart: 155+i*10, transactions: 35+i*3, revenue: 6100+i*400, carts_created: 125+i*8, carts_abandoned: 88+i*4, cvr: (1.9+i*0.09).toFixed(2), atcRate: (8.6+i*0.2).toFixed(1), aov: (174+i*3).toFixed(0), abandon: (70-i*0.4).toFixed(1) },
     },
     amazon: { avgBB: (91+i*0.5).toFixed(1), orders: 220+i*15 },
     amazonASINs: { US: [], EU: [] }
-  }; });
-  history = demo.concat(history);
-  try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){}
-  var m = document.getElementById('noDataMsg');
-  if(m) m.style.display = 'none';
+  }));
+  history = [...demo, ...history];
+  try { try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){} } catch(e) {}
+  document.getElementById('noDataMsg').style.display = 'none';
   updateCharts();
   updateEvoCharts();
 }
@@ -1188,65 +1191,140 @@ function loadDemoData() {
 // ── EVO CHARTS ──
 function updateEvoCharts() {
   if (history.length === 0) {
-    var m = document.getElementById('noDataMsg');
+    const m = document.getElementById('noDataMsg');
     if (m) m.style.display = 'block';
     return;
   }
-  var m = document.getElementById('noDataMsg');
+  const m = document.getElementById('noDataMsg');
   if (m) m.style.display = 'none';
 
-  var sorted = history.slice().sort(function(a,b){ return a.week > b.week ? 1 : -1; });
-  var labels = sorted.map(function(h){ return h.week.replace(/\d{4}-/, ''); });
+  const sorted = [...history].sort((a,b) => a.week > b.week ? 1 : -1);
+  const labels = sorted.map(h => h.week.replace(/\d{4}-/, ''));
 
-  function lineOpts(color) {
-    return { borderColor: color, backgroundColor: color+'18', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: color };
-  }
+  const lineOpts = (color) => ({
+    borderColor: color,
+    backgroundColor: color + '18',
+    tension: 0.35,
+    fill: true,
+    borderWidth: 2,
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    pointBackgroundColor: color
+  });
 
+  // CVR
   makeEvoChart('evoCVR', 'line', labels,
-    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].cvr) || null; }) }, lineOpts(shopColors[s])); })
+    evoShops.map(s => ({ label: s, data: sorted.map(h => parseFloat(h.shops[s]?.cvr)||null), ...lineOpts(shopColors[s]) }))
   );
+
+  // ATC
   makeEvoChart('evoATC', 'line', labels,
-    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].atcRate) || null; }) }, lineOpts(shopColors[s])); })
+    evoShops.map(s => ({ label: s, data: sorted.map(h => parseFloat(h.shops[s]?.atcRate)||null), ...lineOpts(shopColors[s]) }))
   );
+
+  // AOV
   makeEvoChart('evoAOV', 'bar', labels,
-    evoShops.map(function(s){ return { label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].aov) || null; }), backgroundColor: shopColors[s]+'66', borderColor: shopColors[s], borderWidth: 1.5, borderRadius: 5 }; })
+    evoShops.map(s => ({
+      label: s,
+      data: sorted.map(h => parseFloat(h.shops[s]?.aov)||null),
+      backgroundColor: shopColors[s] + '66',
+      borderColor: shopColors[s],
+      borderWidth: 1.5,
+      borderRadius: 5
+    }))
   );
+
+  // Abandon
   makeEvoChart('evoAbandonment', 'line', labels,
-    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].abandon) || null; }) }, lineOpts(shopColors[s])); })
+    evoShops.map(s => ({ label: s, data: sorted.map(h => parseFloat(h.shops[s]?.abandon)||null), ...lineOpts(shopColors[s]) }))
   );
-  makeEvoChart('evoBuyBox', 'line', labels,
-    [Object.assign({ label: 'Buy Box %', data: sorted.map(function(h){ return parseFloat(h.amazon && h.amazon.avgBB) || null; }) }, lineOpts('#F15A29'))],
-    { y: { min: 60, max: 100 } }
-  );
-  makeEvoChart('evoAmazonOrders', 'bar', labels,
-    [{ label: 'Commandes', data: sorted.map(function(h){ return (h.amazon && h.amazon.orders) || 0; }), backgroundColor: '#F15A2966', borderColor: '#F15A29', borderWidth: 1.5, borderRadius: 5 }]
-  );
+
+  // Amazon BB
+  makeEvoChart('evoBuyBox', 'line', labels, [{
+    label: 'Buy Box %',
+    data: sorted.map(h => parseFloat(h.amazon?.avgBB)||null),
+    ...lineOpts('#F15A29')
+  }], { y: { min: 60, max: 100 } });
+
+  // Amazon orders
+  makeEvoChart('evoAmazonOrders', 'bar', labels, [{
+    label: 'Commandes',
+    data: sorted.map(h => h.amazon?.orders || 0),
+    backgroundColor: '#F15A2966',
+    borderColor: '#F15A29',
+    borderWidth: 1.5,
+    borderRadius: 5,
+  }]);
 }
 
-function makeEvoChart(id, type, labels, datasets, extraOpts) {
-  extraOpts = extraOpts || {};
+function makeEvoChart(id, type, labels, datasets, extraOpts={}) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-  var ctx = document.getElementById(id);
+  const ctx = document.getElementById(id);
   if (!ctx) return;
   charts[id] = new Chart(ctx, {
-    type: type,
-    data: { labels: labels, datasets: datasets },
+    type,
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: true, labels: { color: '#6b6860', font: { family: 'DM Sans', size: 11 }, boxWidth: 10, boxHeight: 10, padding: 12 } },
-        tooltip: { backgroundColor: '#ffffff', titleColor: '#1a1917', bodyColor: '#6b6860', borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 10 }
+        legend: {
+          display: true,
+          labels: { color: '#6b6860', font: { family: 'DM Sans', size: 11 }, boxWidth: 10, boxHeight: 10, padding: 12 }
+        },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          titleColor: '#1a1917',
+          bodyColor: '#6b6860',
+          borderColor: 'rgba(0,0,0,0.1)',
+          borderWidth: 1,
+          padding: 10,
+          titleFont: { family: 'Oswald', size: 12 },
+          bodyFont: { family: 'DM Sans', size: 11 }
+        }
       },
       scales: {
-        x: { ticks: { color: '#9a9690', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
-        y: Object.assign({ ticks: { color: '#9a9690', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } }, extraOpts.y || {})
+        x: { ticks: { color: '#9a9690', font: { size: 10, family: 'DM Mono' } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        y: { ticks: { color: '#9a9690', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' }, ...(extraOpts.y || {}) }
       }
     }
   });
 }
 
+// ── HELPERS ──
+function showFeedback(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── LOAD CURRENT WEEK FROM HISTORY ──
+function loadCurrentWeek() {
+  const week = getWeek();
+  const entry = history.find(h => h.week === week);
+  // Always reset first
+  shops.forEach(s => { prestaData[s] = {}; prestaFields.forEach(f => prestaData[s][f] = ''); });
+  amazonASINs = { US: [], EU: [] };
+  if (!entry) return; // No data for this week — stay empty
+  // Restore presta data for all shops
+  shops.forEach(s => {
+    if (entry.shops && entry.shops[s]) {
+      prestaFields.forEach(f => {
+        if (entry.shops[s][f] !== undefined) prestaData[s][f] = entry.shops[s][f];
+      });
+    }
+  });
+  // Restore Amazon ASINs
+  if (entry.amazonASINs) {
+    if (Array.isArray(entry.amazonASINs)) {
+      // Legacy flat array: put in US
+      amazonASINs = { US: entry.amazonASINs, EU: [] };
+    } else {
+      amazonASINs = { US: [], EU: [], ...entry.amazonASINs };
+    }
+  }
+}
 
 // ── INIT ──
 initWeekPicker();
@@ -1254,11 +1332,8 @@ loadCurrentWeek();
 renderPrestaInputs();
 renderPrestaCards();
 renderAsinTable();
-updateAmazonCards();
 updateCharts();
-if(history.length>0) { updateEvoCharts(); }
-
+// Evo charts render on tab click to avoid hidden canvas issues
 </script>
-<script data-wp="1" type="application/json">[{"week": "2026-W21", "shops": {"US": {"sessions": "3867", "add_to_cart": "152", "transactions": "124", "revenue": "17133.70", "carts_created": "378", "carts_abandoned": "254", "cvr": "3.21", "atcRate": "3.9", "aov": "138", "abandon": "67.2"}, "EU": {"sessions": "1619", "add_to_cart": "40", "transactions": "26", "revenue": "2582.14", "carts_created": "58", "carts_abandoned": "32", "cvr": "1.61", "atcRate": "2.5", "aov": "99", "abandon": "55.2"}, "CA": {"sessions": "252", "add_to_cart": "3", "transactions": "10", "revenue": "1080", "carts_created": "16", "carts_abandoned": "6", "cvr": "3.97", "atcRate": "1.2", "aov": "108", "abandon": "37.5"}, "UK": {"sessions": "2725", "add_to_cart": "65", "transactions": "17", "revenue": "1589.86", "carts_created": "90", "carts_abandoned": "73", "cvr": "0.62", "atcRate": "2.4", "aov": "94", "abandon": "81.1"}}, "amazon": {"avgBB": "95.5", "orders": 247}, "amazonASINs": {"US": [{"asin": "B0789MDGLP", "name": "WELLPUTT-GolfPuttingTrainingMat-8ftEssential", "sessions": "1847", "cvr": "4.22", "buybox": "99.86", "orders": "78"}, {"asin": "B0789P8T5V", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftGreen", "sessions": "991", "cvr": "5.05", "buybox": "75.76", "orders": "50"}, {"asin": "B0789WHP89", "name": "WELLPUTT-GolfPuttingTrainingMat-ClassicGreen10ft", "sessions": "864", "cvr": "4.98", "buybox": "89.66", "orders": "43"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftBlack", "sessions": "795", "cvr": "5.16", "buybox": "98.27", "orders": "41"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-GolfPuttingTrainingMat-10ftStart2.0", "sessions": "553", "cvr": "2.89", "buybox": "94.96", "orders": "16"}, {"asin": "B078BFN1Q3", "name": "WELLPUTT-GolfPuttingGates-Packof3Sizes.VersatileOutdoor/IndoorTrainingAid", "sessions": "56", "cvr": "5.36", "buybox": "100.00", "orders": "3"}], "EU": [{"asin": "B0789LW4WW", "name": "WELLPUTT-PuttingmatteGolftraining-4mschwarz", "sessions": "143", "cvr": "3.50", "buybox": "99.38", "orders": "5"}, {"asin": "B0789MDGLP", "name": "WELLPUTT-PuttingmatteGolftraining-240cmEssential", "sessions": "187", "cvr": "2.14", "buybox": "100.00", "orders": "4"}, {"asin": "B093X9NBPK", "name": "WELLPUTT-PuttingmatteGolftraining-4mgr\u00fcn", "sessions": "570", "cvr": "0.70", "buybox": "99.56", "orders": "4"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-PuttingmatteGolftraining-3mStart2.0", "sessions": "177", "cvr": "1.13", "buybox": "100.00", "orders": "2"}, {"asin": "B0789WHP89", "name": "WELLPUTT-PuttingmatteGolftraining-3mgr\u00fcn", "sessions": "35", "cvr": "2.86", "buybox": "92.50", "orders": "1"}]}}, {"week": "2026-W20", "shops": {"US": {"sessions": "3697", "add_to_cart": "166", "transactions": "109", "revenue": "12392.75", "carts_created": "395", "carts_abandoned": "286", "cvr": "2.95", "atcRate": "4.5", "aov": "114", "abandon": "72.4"}, "EU": {"sessions": "1614", "add_to_cart": "50", "transactions": "29", "revenue": "3810.59", "carts_created": "70", "carts_abandoned": "41", "cvr": "1.80", "atcRate": "3.1", "aov": "131", "abandon": "58.6"}, "CA": {"sessions": "246", "add_to_cart": "2", "transactions": "6", "revenue": "794", "carts_created": "10", "carts_abandoned": "4", "cvr": "2.44", "atcRate": "0.8", "aov": "132", "abandon": "40.0"}, "UK": {"sessions": "2918", "add_to_cart": "83", "transactions": "21", "revenue": "2316.66", "carts_created": "56", "carts_abandoned": "35", "cvr": "0.72", "atcRate": "2.8", "aov": "110", "abandon": "62.5"}}, "amazon": {"avgBB": "66.8", "orders": 31}, "amazonASINs": {"US": [{"asin": "B0789MDGLP", "name": "WELLPUTT-GolfPuttingTrainingMat-8ftEssential", "sessions": "363", "cvr": "4.13", "buybox": "99.76", "orders": "15"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftBlack", "sessions": "138", "cvr": "5.07", "buybox": "95.83", "orders": "7"}, {"asin": "B0789P8T5V", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftGreen", "sessions": "110", "cvr": "1.82", "buybox": "33.57", "orders": "2"}, {"asin": "B0789WHP89", "name": "WELLPUTT-GolfPuttingTrainingMat-ClassicGreen10ft", "sessions": "75", "cvr": "2.67", "buybox": "53.13", "orders": "2"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-GolfPuttingTrainingMat-10ftStart2.0", "sessions": "3", "cvr": "33.33", "buybox": "25.00", "orders": "1"}, {"asin": "B078BFN1Q3", "name": "WELLPUTT-GolfPuttingGates-Packof3Sizes.VersatileOutdoor/IndoorTrainingAid", "sessions": "12", "cvr": "8.33", "buybox": "100.00", "orders": "1"}], "EU": [{"asin": "B0789P8T5V", "name": "WELLPUTT-TapisdePuttingEntra\u00eenementGolf-4mVert", "sessions": "19", "cvr": "10.53", "buybox": "27.27", "orders": "2"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-TapisdePuttingEntra\u00eenementGolf-4mNoir", "sessions": "58", "cvr": "1.72", "buybox": "100.00", "orders": "1"}]}}]</script>
 </body>
 </html>
