@@ -336,9 +336,11 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
   <div class="week-selector">
     <label>Semaine</label>
     <input type="week" id="weekPicker" onchange="loadCurrentWeek(); renderPrestaInputs(); renderPrestaCards(); renderAsinTable();">
-    <button class="btn-primary" onclick="saveWeek()">Enregistrer & Sauvegarder</button>
-    <button class="btn-secondary" onclick="saveToFile()">💾 Sauvegarder</button>
-    <button class="btn-secondary" style="color:var(--red);border-color:var(--red)" onclick="clearData()">Effacer données</button>
+    <button class="btn-primary" onclick="saveWeek()">Enregistrer</button>
+    <button class="btn-secondary" onclick="saveToFile()">&#128228; Exporter JSON</button>
+    <label class="btn-secondary" style="cursor:pointer">&#128194; Importer<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
+    <button class="btn-secondary" onclick="refreshData()">&#8635; Rafra&#238;chir</button>
+    <button class="btn-secondary" style="color:var(--red);border-color:var(--red)" onclick="clearData()">Effacer</button>
   </div>
 </div>
 
