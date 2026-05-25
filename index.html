@@ -588,6 +588,21 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
 
 
 <script>
+
+function refreshData() {
+  loadData(function() {
+    loadCurrentWeek();
+    renderPrestaInputs();
+    renderPrestaCards();
+    renderAsinTable();
+    updateAmazonCards();
+    updateCharts();
+    if (history.length > 0) updateEvoCharts();
+    if (document.querySelector('.tab.active') && document.querySelector('.tab.active').textContent.includes('Historique')) renderHistory();
+    alert('✓ Données rechargées depuis GitHub.');
+  });
+}
+
 function importData(input) {
   var file = input.files[0]; if (!file) return;
   var reader = new FileReader();
@@ -609,8 +624,28 @@ function importData(input) {
 // ── STATE ──
 let currentShop = 'US';
 // ── DATA BOOTSTRAP (injected on save) ──
-let history = (function(){ try { return JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { return []; } })();
-if (!history.length) history = [{"week": "2026-W21", "shops": {"US": {"sessions": "3867", "add_to_cart": "152", "transactions": "124", "revenue": "17133.70", "carts_created": "3783", "carts_abandoned": "254", "cvr": "3.21", "atcRate": "3.9", "aov": "138", "abandon": "6.7"}, "EU": {}, "CA": {}, "UK": {}}, "amazon": {"avgBB": null, "orders": 0}, "amazonASINs": {"US": [], "EU": []}}, {"week": "2026-W20", "shops": {"US": {"sessions": "3697", "transactions": "109", "cvr": "2.95"}, "EU": {}, "CA": {}, "UK": {}}, "amazon": {"avgBB": null, "orders": 0}, "amazonASINs": {"US": [], "EU": []}}];
+let history = [];
+
+// Load data: fetch wellputt-data.json first, fallback to localStorage
+function loadData(callback) {
+  fetch('wellputt-data.json?t=' + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error('not found');
+      return r.json();
+    })
+    .then(function(data) {
+      if (Array.isArray(data) && data.length > 0) {
+        history = data;
+        try { localStorage.setItem('wp_kpi_history', JSON.stringify(history)); } catch(e) {}
+      }
+      callback();
+    })
+    .catch(function() {
+      // Fallback to localStorage
+      try { history = JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { history = []; }
+      callback();
+    });
+}
 
 const shops = ['US', 'EU', 'CA', 'UK'];
 const shopColors = { US: '#F15A29', EU: '#4a9eff', CA: '#2ecc8a', UK: '#a78bfa' };
@@ -986,7 +1021,7 @@ function saveWeek() {
   try { try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){} } catch(e) {}
   updateCharts();
   updateEvoCharts();
-  alert('✓ Semaine ' + week + ' enregistrée.');
+  alert('✓ Semaine ' + week + ' enregistrée.\n\nClique "Éxporter JSON" → upload wellputt-data.json sur GitHub pour partager avec l\'équipe.');
 }
 
 // ── EXPORT ──
@@ -1330,12 +1365,15 @@ function loadCurrentWeek() {
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
   initWeekPicker();
-  loadCurrentWeek();
-  renderPrestaInputs();
-  renderPrestaCards();
-  renderAsinTable();
-  updateAmazonCards();
-  updateCharts();
+  loadData(function() {
+    loadCurrentWeek();
+    renderPrestaInputs();
+    renderPrestaCards();
+    renderAsinTable();
+    updateAmazonCards();
+    updateCharts();
+    if (history.length > 0) updateEvoCharts();
+  });
 });
 
 </script>

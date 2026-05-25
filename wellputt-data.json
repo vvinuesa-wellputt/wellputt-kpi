@@ -1,0 +1,51 @@
+[
+  {
+    "week": "2026-W21",
+    "shops": {
+      "US": {
+        "sessions": "3867",
+        "add_to_cart": "152",
+        "transactions": "124",
+        "revenue": "17133.70",
+        "carts_created": "3783",
+        "carts_abandoned": "254",
+        "cvr": "3.21",
+        "atcRate": "3.9",
+        "aov": "138",
+        "abandon": "6.7"
+      },
+      "EU": {},
+      "CA": {},
+      "UK": {}
+    },
+    "amazon": {
+      "avgBB": null,
+      "orders": 0
+    },
+    "amazonASINs": {
+      "US": [],
+      "EU": []
+    }
+  },
+  {
+    "week": "2026-W20",
+    "shops": {
+      "US": {
+        "sessions": "3697",
+        "transactions": "109",
+        "cvr": "2.95"
+      },
+      "EU": {},
+      "CA": {},
+      "UK": {}
+    },
+    "amazon": {
+      "avgBB": null,
+      "orders": 0
+    },
+    "amazonASINs": {
+      "US": [],
+      "EU": []
+    }
+  }
+]
