@@ -590,6 +590,7 @@ td input.td-input:focus { border-bottom-color: var(--orange); }
 </div><!-- /main -->
 
 <script>
+
 // ── STATE ──
 let currentShop = 'US';
 // ── DATA BOOTSTRAP (injected on save) ──
@@ -1151,3 +1152,113 @@ function saveToFile() {
     alert('Erreur export: ' + e.message);
   }
 }
+
+
+// ── EVO SHOPS FILTER ──
+let evoShops = ['US','EU','CA','UK'];
+function toggleEvoShop(shop, el) {
+  el.classList.toggle('active');
+  if (evoShops.includes(shop)) evoShops = evoShops.filter(s => s !== shop);
+  else evoShops.push(shop);
+  updateEvoCharts();
+}
+
+// ── DEMO DATA ──
+function loadDemoData() {
+  const weeks = ['2026-W16','2026-W17','2026-W18','2026-W19','2026-W20'];
+  const demo = weeks.map(function(w, i) { return {
+    week: w,
+    shops: {
+      US: { sessions: 8200+i*300, transactions: 180+i*12, revenue: 28000+i*1800, carts_created: 620+i*30, carts_abandoned: 430+i*10, cvr: (2.2+i*0.12).toFixed(2), atcRate: (10.0+i*0.3).toFixed(1), aov: (155+i*5).toFixed(0), abandon: (69-i*0.8).toFixed(1) },
+      EU: { sessions: 5400+i*200, transactions: 110+i*8, revenue: 19000+i*1200, carts_created: 390+i*20, carts_abandoned: 275+i*8, cvr: (2.0+i*0.10).toFixed(2), atcRate: (9.1+i*0.2).toFixed(1), aov: (173+i*4).toFixed(0), abandon: (70-i*0.6).toFixed(1) },
+      CA: { sessions: 2100+i*90, transactions: 42+i*4, revenue: 7200+i*500, carts_created: 150+i*10, carts_abandoned: 105+i*5, cvr: (2.0+i*0.08).toFixed(2), atcRate: (8.8+i*0.25).toFixed(1), aov: (171+i*3).toFixed(0), abandon: (70-i*0.5).toFixed(1) },
+      UK: { sessions: 1800+i*70, transactions: 35+i*3, revenue: 6100+i*400, carts_created: 125+i*8, carts_abandoned: 88+i*4, cvr: (1.9+i*0.09).toFixed(2), atcRate: (8.6+i*0.2).toFixed(1), aov: (174+i*3).toFixed(0), abandon: (70-i*0.4).toFixed(1) }
+    },
+    amazon: { avgBB: (91+i*0.5).toFixed(1), orders: 220+i*15 },
+    amazonASINs: { US: [], EU: [] }
+  }; });
+  history = demo.concat(history);
+  try{localStorage.setItem('wp_kpi_history',JSON.stringify(history));}catch(e){}
+  var m = document.getElementById('noDataMsg');
+  if(m) m.style.display = 'none';
+  updateCharts();
+  updateEvoCharts();
+}
+
+// ── EVO CHARTS ──
+function updateEvoCharts() {
+  if (history.length === 0) {
+    var m = document.getElementById('noDataMsg');
+    if (m) m.style.display = 'block';
+    return;
+  }
+  var m = document.getElementById('noDataMsg');
+  if (m) m.style.display = 'none';
+
+  var sorted = history.slice().sort(function(a,b){ return a.week > b.week ? 1 : -1; });
+  var labels = sorted.map(function(h){ return h.week.replace(/\d{4}-/, ''); });
+
+  function lineOpts(color) {
+    return { borderColor: color, backgroundColor: color+'18', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: color };
+  }
+
+  makeEvoChart('evoCVR', 'line', labels,
+    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].cvr) || null; }) }, lineOpts(shopColors[s])); })
+  );
+  makeEvoChart('evoATC', 'line', labels,
+    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].atcRate) || null; }) }, lineOpts(shopColors[s])); })
+  );
+  makeEvoChart('evoAOV', 'bar', labels,
+    evoShops.map(function(s){ return { label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].aov) || null; }), backgroundColor: shopColors[s]+'66', borderColor: shopColors[s], borderWidth: 1.5, borderRadius: 5 }; })
+  );
+  makeEvoChart('evoAbandonment', 'line', labels,
+    evoShops.map(function(s){ return Object.assign({ label: s, data: sorted.map(function(h){ return parseFloat(h.shops[s] && h.shops[s].abandon) || null; }) }, lineOpts(shopColors[s])); })
+  );
+  makeEvoChart('evoBuyBox', 'line', labels,
+    [Object.assign({ label: 'Buy Box %', data: sorted.map(function(h){ return parseFloat(h.amazon && h.amazon.avgBB) || null; }) }, lineOpts('#F15A29'))],
+    { y: { min: 60, max: 100 } }
+  );
+  makeEvoChart('evoAmazonOrders', 'bar', labels,
+    [{ label: 'Commandes', data: sorted.map(function(h){ return (h.amazon && h.amazon.orders) || 0; }), backgroundColor: '#F15A2966', borderColor: '#F15A29', borderWidth: 1.5, borderRadius: 5 }]
+  );
+}
+
+function makeEvoChart(id, type, labels, datasets, extraOpts) {
+  extraOpts = extraOpts || {};
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  var ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: type,
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#6b6860', font: { family: 'DM Sans', size: 11 }, boxWidth: 10, boxHeight: 10, padding: 12 } },
+        tooltip: { backgroundColor: '#ffffff', titleColor: '#1a1917', bodyColor: '#6b6860', borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 10 }
+      },
+      scales: {
+        x: { ticks: { color: '#9a9690', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        y: Object.assign({ ticks: { color: '#9a9690', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } }, extraOpts.y || {})
+      }
+    }
+  });
+}
+
+
+// ── INIT ──
+initWeekPicker();
+loadCurrentWeek();
+renderPrestaInputs();
+renderPrestaCards();
+renderAsinTable();
+updateAmazonCards();
+updateCharts();
+if(history.length>0) { updateEvoCharts(); }
+
+</script>
+<script data-wp="1" type="application/json">[{"week": "2026-W21", "shops": {"US": {"sessions": "3867", "add_to_cart": "152", "transactions": "124", "revenue": "17133.70", "carts_created": "378", "carts_abandoned": "254", "cvr": "3.21", "atcRate": "3.9", "aov": "138", "abandon": "67.2"}, "EU": {"sessions": "1619", "add_to_cart": "40", "transactions": "26", "revenue": "2582.14", "carts_created": "58", "carts_abandoned": "32", "cvr": "1.61", "atcRate": "2.5", "aov": "99", "abandon": "55.2"}, "CA": {"sessions": "252", "add_to_cart": "3", "transactions": "10", "revenue": "1080", "carts_created": "16", "carts_abandoned": "6", "cvr": "3.97", "atcRate": "1.2", "aov": "108", "abandon": "37.5"}, "UK": {"sessions": "2725", "add_to_cart": "65", "transactions": "17", "revenue": "1589.86", "carts_created": "90", "carts_abandoned": "73", "cvr": "0.62", "atcRate": "2.4", "aov": "94", "abandon": "81.1"}}, "amazon": {"avgBB": "95.5", "orders": 247}, "amazonASINs": {"US": [{"asin": "B0789MDGLP", "name": "WELLPUTT-GolfPuttingTrainingMat-8ftEssential", "sessions": "1847", "cvr": "4.22", "buybox": "99.86", "orders": "78"}, {"asin": "B0789P8T5V", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftGreen", "sessions": "991", "cvr": "5.05", "buybox": "75.76", "orders": "50"}, {"asin": "B0789WHP89", "name": "WELLPUTT-GolfPuttingTrainingMat-ClassicGreen10ft", "sessions": "864", "cvr": "4.98", "buybox": "89.66", "orders": "43"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftBlack", "sessions": "795", "cvr": "5.16", "buybox": "98.27", "orders": "41"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-GolfPuttingTrainingMat-10ftStart2.0", "sessions": "553", "cvr": "2.89", "buybox": "94.96", "orders": "16"}, {"asin": "B078BFN1Q3", "name": "WELLPUTT-GolfPuttingGates-Packof3Sizes.VersatileOutdoor/IndoorTrainingAid", "sessions": "56", "cvr": "5.36", "buybox": "100.00", "orders": "3"}], "EU": [{"asin": "B0789LW4WW", "name": "WELLPUTT-PuttingmatteGolftraining-4mschwarz", "sessions": "143", "cvr": "3.50", "buybox": "99.38", "orders": "5"}, {"asin": "B0789MDGLP", "name": "WELLPUTT-PuttingmatteGolftraining-240cmEssential", "sessions": "187", "cvr": "2.14", "buybox": "100.00", "orders": "4"}, {"asin": "B093X9NBPK", "name": "WELLPUTT-PuttingmatteGolftraining-4mgr\u00fcn", "sessions": "570", "cvr": "0.70", "buybox": "99.56", "orders": "4"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-PuttingmatteGolftraining-3mStart2.0", "sessions": "177", "cvr": "1.13", "buybox": "100.00", "orders": "2"}, {"asin": "B0789WHP89", "name": "WELLPUTT-PuttingmatteGolftraining-3mgr\u00fcn", "sessions": "35", "cvr": "2.86", "buybox": "92.50", "orders": "1"}]}}, {"week": "2026-W20", "shops": {"US": {"sessions": "3697", "add_to_cart": "166", "transactions": "109", "revenue": "12392.75", "carts_created": "395", "carts_abandoned": "286", "cvr": "2.95", "atcRate": "4.5", "aov": "114", "abandon": "72.4"}, "EU": {"sessions": "1614", "add_to_cart": "50", "transactions": "29", "revenue": "3810.59", "carts_created": "70", "carts_abandoned": "41", "cvr": "1.80", "atcRate": "3.1", "aov": "131", "abandon": "58.6"}, "CA": {"sessions": "246", "add_to_cart": "2", "transactions": "6", "revenue": "794", "carts_created": "10", "carts_abandoned": "4", "cvr": "2.44", "atcRate": "0.8", "aov": "132", "abandon": "40.0"}, "UK": {"sessions": "2918", "add_to_cart": "83", "transactions": "21", "revenue": "2316.66", "carts_created": "56", "carts_abandoned": "35", "cvr": "0.72", "atcRate": "2.8", "aov": "110", "abandon": "62.5"}}, "amazon": {"avgBB": "66.8", "orders": 31}, "amazonASINs": {"US": [{"asin": "B0789MDGLP", "name": "WELLPUTT-GolfPuttingTrainingMat-8ftEssential", "sessions": "363", "cvr": "4.13", "buybox": "99.76", "orders": "15"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftBlack", "sessions": "138", "cvr": "5.07", "buybox": "95.83", "orders": "7"}, {"asin": "B0789P8T5V", "name": "WELLPUTT-GolfPuttingTrainingMat-13ftGreen", "sessions": "110", "cvr": "1.82", "buybox": "33.57", "orders": "2"}, {"asin": "B0789WHP89", "name": "WELLPUTT-GolfPuttingTrainingMat-ClassicGreen10ft", "sessions": "75", "cvr": "2.67", "buybox": "53.13", "orders": "2"}, {"asin": "B0789WHQY8", "name": "WELLPUTT-GolfPuttingTrainingMat-10ftStart2.0", "sessions": "3", "cvr": "33.33", "buybox": "25.00", "orders": "1"}, {"asin": "B078BFN1Q3", "name": "WELLPUTT-GolfPuttingGates-Packof3Sizes.VersatileOutdoor/IndoorTrainingAid", "sessions": "12", "cvr": "8.33", "buybox": "100.00", "orders": "1"}], "EU": [{"asin": "B0789P8T5V", "name": "WELLPUTT-TapisdePuttingEntra\u00eenementGolf-4mVert", "sessions": "19", "cvr": "10.53", "buybox": "27.27", "orders": "2"}, {"asin": "B0789LW4WW", "name": "WELLPUTT-TapisdePuttingEntra\u00eenementGolf-4mNoir", "sessions": "58", "cvr": "1.72", "buybox": "100.00", "orders": "1"}]}}]</script>
+</body>
+</html>
