@@ -630,21 +630,46 @@ let history = [];
 
 // Load data: fetch wellputt-data.json first, fallback to localStorage
 function loadData(callback) {
+  // Charger d'abord l'historique local
+  try { history = JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { history = []; }
+
   fetch('wellputt-data.json?t=' + Date.now())
-    .then(function(r) {
-      if (!r.ok) throw new Error('not found');
-      return r.json();
-    })
+    .then(function(r) { if (!r.ok) throw new Error('not found'); return r.json(); })
     .then(function(data) {
-      if (Array.isArray(data) && data.length > 0) {
-        history = data;
-        try { localStorage.setItem('wp_kpi_history', JSON.stringify(history)); } catch(e) {}
-      }
+      // Make écrit un objet {week, shops, amazon} — pas un tableau
+      // On normalise en tableau puis on fusionne avec l'historique local
+      var incoming = Array.isArray(data) ? data : [data];
+      incoming.forEach(function(entry) {
+        if (!entry || !entry.week) return;
+        // Recalculer CVR / AOV / atcRate si Make les a mal calculés (0 ou manquants)
+        if (entry.shops) {
+          ['US','EU','CA','UK'].forEach(function(s) {
+            var sh = entry.shops[s];
+            if (!sh) return;
+            var sess = parseFloat(sh.sessions) || 0;
+            var tx   = parseFloat(sh.transactions) || 0;
+            var rev  = parseFloat(sh.revenue) || 0;
+            var atc  = parseFloat(sh.add_to_cart) || 0;
+            // Recalculer seulement si la valeur est absente ou nulle
+            if (!sh.cvr || sh.cvr === '0' || sh.cvr === 0)
+              sh.cvr = sess > 0 ? (tx / sess * 100).toFixed(2) : '0';
+            if (!sh.aov || sh.aov === '0' || sh.aov === 0)
+              sh.aov = tx > 0 ? (rev / tx).toFixed(0) : '0';
+            if (!sh.atcRate || sh.atcRate === '0' || sh.atcRate === 0)
+              sh.atcRate = sess > 0 ? (atc / sess * 100).toFixed(1) : '0';
+          });
+        }
+        // Fusionner : remplacer si la semaine existe déjà, sinon ajouter
+        var idx = history.findIndex(function(h) { return h.week === entry.week; });
+        if (idx >= 0) history[idx] = entry;
+        else history.push(entry);
+      });
+      history.sort(function(a, b) { return a.week > b.week ? -1 : 1; });
+      try { localStorage.setItem('wp_kpi_history', JSON.stringify(history)); } catch(e) {}
       callback();
     })
     .catch(function() {
-      // Fallback to localStorage
-      try { history = JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { history = []; }
+      // Pas de fichier JSON accessible — on utilise le localStorage tel quel
       callback();
     });
 }
