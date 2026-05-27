@@ -591,7 +591,7 @@ function renderPresta() {
   const isAll = sh==='ALL';
   if (!entry) { document.getElementById('prestaKpis').innerHTML='<div class="loading-bar">Aucune donnée.</div>'; return; }
 
-  const n = getNWeeks();
+  const n = prestaChartPeriod > 0 ? Math.min(prestaChartPeriod, getFiltered().length) : getFiltered().length;
   document.getElementById('prestaChartTitle').textContent = `Tendances — ${n} semaine${n>1?'s':''}`;
 
   let kpis = [];
@@ -651,7 +651,7 @@ function renderPresta() {
   }
 
   // Charts
-  const sorted = getPeriod(evoPeriod);
+  const sorted = getPeriod(prestaChartPeriod);
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   if (isAll) {
     const cvrD = sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
