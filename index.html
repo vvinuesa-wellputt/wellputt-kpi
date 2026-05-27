@@ -27,18 +27,16 @@
   --bg: #f5f4f0;
   --bg2: #ffffff;
   --bg3: #ede9e3;
-  --border: rgba(0,0,0,0.07);
-  --border2: rgba(0,0,0,0.13);
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.16);
   --text: #1a1917;
-  --muted: #a09a94;
-  --muted2: #6b6860;
+  --muted: #8a8480;
+  --muted2: #5a5650;
   --orange: #F15A29;
   --orange2: #ff7a47;
   --green: #1a9e65;
   --red: #c0392b;
   --amber: #d4850a;
-  --blue: #1a7ae0;
-  --purple: #7c3aed;
   --us: #F15A29;
   --eu: #4a9eff;
   --ca: #2ecc8a;
@@ -50,187 +48,169 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 
 /* HEADER */
 .header {
-  border-bottom: 0.5px solid var(--border);
-  padding: 16px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  border-bottom: 1px solid var(--border2);
+  padding: 12px 32px;
+  display: flex; align-items: center; justify-content: space-between;
   background: var(--bg3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+  gap: 12px; flex-wrap: wrap;
 }
-.logo { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
+.logo { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
 .logo span { color: var(--orange); }
-.header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.week-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; }
-.week-selector input[type=week] {
-  background: var(--bg3);
-  border: 0.5px solid var(--border2);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  outline: none;
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.last-update-wrap { display: flex; flex-direction: column; align-items: flex-end; }
+.last-update { font-size: 11px; color: var(--muted2); font-family: 'DM Mono', monospace; white-space: nowrap; }
+.refresh-hint { font-size: 9px; color: var(--muted); font-style: italic; }
+.header-filter { display: flex; align-items: center; gap: 6px; }
+.header-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.header-select, input[type=week] {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px;
+  padding: 6px 10px; border-radius: 6px; cursor: pointer; outline: none;
 }
-.week-selector input[type=week]:focus { border-color: var(--orange); }
-.last-update { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.header-select:focus, input[type=week]:focus { border-color: var(--orange); }
 .btn-refresh {
-  background: var(--orange);
-  color: white;
-  border: none;
-  font-family: 'Oswald', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 7px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  background: var(--orange); color: white; border: none;
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 8px 18px; border-radius: 6px; cursor: pointer;
+  transition: background 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
 }
 .btn-refresh:hover { background: var(--orange2); }
 .btn-refresh.loading { opacity: 0.6; pointer-events: none; }
-.spin { display: inline-block; animation: spin 0.8s linear infinite; }
+.spin { animation: spin 0.8s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* MAIN */
-.main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
-.section { margin-bottom: 40px; }
-
-/* SECTION TITLE */
-.section-title {
-  font-family: 'Oswald', sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* NAV TABS */
+.nav-tabs {
+  display: flex; gap: 0; padding: 0 32px;
+  border-bottom: 1px solid var(--border2);
+  background: var(--bg3);
+  position: sticky; top: 55px; z-index: 99;
 }
-.section-title::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+.nav-tab {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 400;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2);
+  padding: 13px 22px; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--orange); border-bottom-color: var(--orange); font-weight: 500; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+.main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+.section { margin-bottom: 36px; }
+
+/* SECTION TITLES */
+.section-title {
+  font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+.section-title .badge { font-size: 11px; font-weight: 400; color: var(--muted2); letter-spacing: 0.04em; text-transform: none; font-family: 'DM Sans', sans-serif; }
+.subsection-title {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text);
+  margin-bottom: 12px; margin-top: 20px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border2);
+}
 
 /* STAT CARDS */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat-card {
-  background: var(--bg2);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  transition: border-color 0.15s;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.stat-card:hover { border-color: var(--border2); }
-.sc-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-.sc-value { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 4px; }
+.stat-card:hover { border-color: var(--border2); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.sc-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 600; }
+.sc-value { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 5px; }
 .sc-value.orange { color: var(--orange); }
-.sc-value.green { color: var(--green); }
-.sc-value.red { color: var(--red); }
 .sc-delta { font-size: 11px; color: var(--muted2); display: flex; align-items: center; gap: 4px; }
 .sc-delta.up { color: var(--green); }
 .sc-delta.down { color: var(--red); }
 
-/* SHOP TABS */
-.shop-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-.shop-tab {
-  font-size: 11px;
-  font-family: 'Oswald', sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 5px 14px;
-  border-radius: 5px;
-  border: 0.5px solid var(--border2);
-  color: var(--muted2);
-  cursor: pointer;
-  transition: all 0.15s;
+/* FILTER ROWS */
+.filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.shop-tab, .period-btn {
+  font-size: 11px; font-family: 'Oswald', sans-serif; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 5px 14px; border-radius: 5px;
+  border: 1px solid var(--border2); color: var(--muted2); cursor: pointer;
+  transition: all 0.15s; background: var(--bg2);
 }
-.shop-tab[data-shop="US"].active, .shop-tab[data-shop="US"]:hover { background: var(--us); color: white; border-color: var(--us); }
-.shop-tab[data-shop="EU"].active, .shop-tab[data-shop="EU"]:hover { background: var(--eu); color: white; border-color: var(--eu); }
-.shop-tab[data-shop="CA"].active, .shop-tab[data-shop="CA"]:hover { background: var(--ca); color: white; border-color: var(--ca); }
-.shop-tab[data-shop="UK"].active, .shop-tab[data-shop="UK"]:hover { background: var(--uk); color: white; border-color: var(--uk); }
+.shop-tab:hover, .period-btn:hover { border-color: var(--text); color: var(--text); }
+.shop-tab.active, .period-btn.active { background: var(--text); color: white; border-color: var(--text); }
+.shop-tab[data-shop="US"].active { background: var(--us); border-color: var(--us); }
+.shop-tab[data-shop="EU"].active { background: var(--eu); border-color: var(--eu); }
+.shop-tab[data-shop="CA"].active { background: var(--ca); border-color: var(--ca); }
+.shop-tab[data-shop="UK"].active { background: var(--uk); border-color: var(--uk); }
+.shop-tab[data-amz="USCA"].active { background: var(--us); border-color: var(--us); }
+.shop-tab[data-amz="EUUK"].active { background: var(--eu); border-color: var(--eu); }
 
-/* CHART ROW */
-.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.chart-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.chart-card {
-  background: var(--bg2);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 18px 20px;
-}
-.chart-card h3 { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Oswald', sans-serif; font-weight: 400; margin-bottom: 14px; }
-.chart-wrap { position: relative; height: 200px; }
-.chart-wrap.tall { height: 260px; }
-
-/* KPI GRID shop detail */
+/* KPI GRID */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-.kpi-card {
-  background: var(--bg3);
-  border-radius: 8px;
-  padding: 12px 14px;
-  border-left: 3px solid transparent;
-}
+.kpi-card { background: var(--bg3); border-radius: 8px; padding: 12px 14px; border-left: 3px solid var(--border2); }
 .kpi-card.us { border-left-color: var(--us); }
 .kpi-card.eu { border-left-color: var(--eu); }
 .kpi-card.ca { border-left-color: var(--ca); }
 .kpi-card.uk { border-left-color: var(--uk); }
-.kpi-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.kpi-card.global { border-left-color: var(--text); }
+.kpi-label { font-size: 9px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; font-weight: 600; }
 .kpi-val { font-family: 'Oswald', sans-serif; font-size: 22px; color: var(--text); line-height: 1; }
 .kpi-sub { font-size: 10px; color: var(--muted2); margin-top: 3px; }
 
 /* FUNNEL */
-.funnel-card {
-  background: var(--bg2);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 18px 20px;
-  margin-bottom: 16px;
-}
-.funnel-title { font-size: 11px; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Oswald', sans-serif; font-weight: 400; margin-bottom: 16px; }
-.funnel { display: flex; flex-direction: column; gap: 10px; }
+.funnel-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+.funnel-title { font-size: 13px; color: var(--text); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Oswald', sans-serif; font-weight: 600; margin-bottom: 16px; }
+.funnel { display: flex; flex-direction: column; gap: 12px; }
 .funnel-row { display: flex; align-items: center; gap: 12px; }
-.funnel-label { font-size: 11px; color: var(--muted2); width: 110px; flex: none; }
-.funnel-bar-wrap { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-.funnel-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-.funnel-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); width: 60px; text-align: right; flex: none; }
+.funnel-step { font-size: 10px; color: var(--muted2); width: 130px; flex: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.funnel-bar-wrap { flex: 1; height: 7px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.funnel-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.funnel-val { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); width: 60px; text-align: right; flex: none; font-weight: 500; }
+
+/* CHARTS */
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+.chart-card h3 { font-size: 12px; color: var(--text); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Oswald', sans-serif; font-weight: 600; margin-bottom: 14px; }
+.chart-wrap { position: relative; height: 200px; }
+.chart-wrap.tall { height: 260px; }
+
+/* COMING SOON */
+.coming-soon {
+  background: var(--bg2); border: 1.5px dashed var(--border2);
+  border-radius: 10px; padding: 22px; text-align: center; margin-bottom: 8px;
+}
+.cs-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(241,90,41,0.08); color: var(--orange);
+  border: 1px solid rgba(241,90,41,0.2); border-radius: 20px;
+  padding: 5px 14px; font-size: 11px; font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;
+}
+.coming-soon p { font-size: 12px; color: var(--muted2); }
 
 /* HISTORY TABLE */
 .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.history-table th { font-size: 10px; font-family: 'Oswald', sans-serif; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 7px 10px; border-bottom: 0.5px solid var(--border2); white-space: nowrap; }
+.history-table th { font-size: 10px; font-family: 'Oswald', sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); text-align: left; padding: 8px 10px; border-bottom: 1.5px solid var(--border2); white-space: nowrap; }
 .history-table td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted2); white-space: nowrap; }
 .history-table tr:hover td { background: var(--bg3); }
-.history-table .week-current td { color: var(--text); font-weight: 500; background: rgba(241,90,41,0.04); }
+.history-table .week-current td { color: var(--text); font-weight: 500; background: rgba(241,90,41,0.03); }
 .shop-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
-/* AMAZON */
-.amz-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-
-/* BADGE */
-.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; }
-.badge-ok { background: rgba(26,158,101,0.12); color: var(--green); }
-.badge-warn { background: rgba(212,133,10,0.12); color: var(--amber); }
-.badge-bad { background: rgba(192,57,43,0.12); color: var(--red); }
-
-/* NO DATA */
-.no-data { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg3); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* LOADING */
+.loading-bar { text-align: center; padding: 40px; color: var(--muted2); font-size: 13px; }
 
 @media (max-width: 768px) {
-  .header { padding: 12px 16px; }
+  .header { padding: 10px 16px; }
+  .nav-tabs { padding: 0 16px; top: 50px; }
   .main { padding: 16px; }
-  .chart-row, .chart-row-3 { grid-template-columns: 1fr; }
-  .amz-grid { grid-template-columns: 1fr 1fr; }
+  .chart-row { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -240,10 +220,19 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 <div class="header">
   <div class="logo">WELL<span>PUTT</span> KPI</div>
   <div class="header-right">
-    <span class="last-update" id="lastUpdate">—</span>
-    <div class="week-selector">
-      <label class="week-label">Semaine</label>
+    <div class="last-update-wrap">
+      <span class="last-update" id="lastUpdate">Chargement...</span>
+      <span class="refresh-hint">↻ Cliquez sur Refresh pour avoir les dernières données</span>
+    </div>
+    <div class="header-filter">
+      <span class="header-label">Semaine</span>
       <input type="week" id="weekPicker" onchange="onWeekChange()">
+    </div>
+    <div class="header-filter">
+      <span class="header-label">Année</span>
+      <select id="yearFilter" class="header-select" onchange="onYearChange()">
+        <option value="all">Toutes</option>
+      </select>
     </div>
     <button class="btn-refresh" onclick="refreshData()" id="refreshBtn">
       <span id="refreshIcon">↻</span> Refresh
@@ -251,260 +240,313 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
   </div>
 </div>
 
+<!-- NAV -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchPage('dashboard', this)">Dashboard</div>
+  <div class="nav-tab" onclick="switchPage('evolution', this)">Évolution & Historique</div>
+</div>
+
+<!-- PAGE DASHBOARD -->
+<div id="page-dashboard" class="page active">
 <div class="main">
 
-  <!-- SECTION 1 — VUE GLOBALE -->
+  <!-- S1: VUE GLOBALE -->
   <div class="section">
-    <div class="section-title">Vue globale — Semaine sélectionnée <span id="globalWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace"></span></div>
+    <div class="section-title">Vue globale — Semaine sélectionnée <span id="globalWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace;margin-left:4px"></span></div>
     <div class="stat-grid" id="globalCards"></div>
   </div>
 
-  <!-- SECTION 2 — PRESTA PAR SHOP -->
+  <!-- S2: PRESTA -->
   <div class="section">
-    <div class="section-title">Prestashop — Semaine sélectionnée <span id="prestaWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace"></span></div>
-    <div class="shop-tabs">
-      <div class="shop-tab active" data-shop="US" onclick="selectShop('US', this)">US</div>
-      <div class="shop-tab" data-shop="EU" onclick="selectShop('EU', this)">EU</div>
-      <div class="shop-tab" data-shop="CA" onclick="selectShop('CA', this)">CA</div>
-      <div class="shop-tab" data-shop="UK" onclick="selectShop('UK', this)">UK</div>
+    <div class="section-title">Prestashop — Semaine sélectionnée <span id="prestaWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace;margin-left:4px"></span></div>
+    <div class="filter-row">
+      <span class="filter-label">Shop</span>
+      <div class="shop-tab active" data-shop="ALL" onclick="selectPrestaShop('ALL',this)">Vue globale</div>
+      <div class="shop-tab" data-shop="US" onclick="selectPrestaShop('US',this)">US</div>
+      <div class="shop-tab" data-shop="EU" onclick="selectPrestaShop('EU',this)">EU</div>
+      <div class="shop-tab" data-shop="CA" onclick="selectPrestaShop('CA',this)">CA</div>
+      <div class="shop-tab" data-shop="UK" onclick="selectPrestaShop('UK',this)">UK</div>
     </div>
-    <div class="kpi-grid" id="shopKpis"></div>
-    <div class="funnel-card">
-      <div class="funnel-title">Funnel de conversion</div>
-      <div class="funnel" id="shopFunnel"></div>
+    <div id="prestaKpis" class="kpi-grid"></div>
+    <div id="prestaFunnel"></div>
+    <div class="subsection-title">Produits vedettes</div>
+    <div class="coming-soon"><div class="cs-badge">⏳ Coming Soon</div><p>Les produits vedettes seront disponibles prochainement.</p></div>
+    <div class="subsection-title" id="prestaChartTitle">Tendances</div>
+    <div class="filter-row" id="prestaPeriodRow" style="margin-bottom:12px">
+      <span class="filter-label">Période</span>
+      <div class="period-btn active" onclick="setPrestaChartPeriod(4,this)">4 sem</div>
+      <div class="period-btn" onclick="setPrestaChartPeriod(8,this)">8 sem</div>
+      <div class="period-btn" onclick="setPrestaChartPeriod(13,this)">13 sem</div>
+      <div class="period-btn" onclick="setPrestaChartPeriod(0,this)">Tout</div>
     </div>
     <div class="chart-row">
-      <div class="chart-card">
-        <h3>CVR % — <span class="nweeks"></span> semaines</h3>
-        <div class="chart-wrap"><canvas id="chartShopCvr"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Taux abandon panier % — <span class="nweeks"></span> semaines</h3>
-        <div class="chart-wrap"><canvas id="chartShopAbandon"></canvas></div>
-      </div>
+      <div class="chart-card"><h3>Taux de conversion (CVR %)</h3><div class="chart-wrap"><canvas id="chartCvr"></canvas></div></div>
+      <div class="chart-card"><h3>Abandon panier %</h3><div class="chart-wrap"><canvas id="chartAbandon"></canvas></div></div>
     </div>
   </div>
 
-  <!-- SECTION 3 — AMAZON -->
+  <!-- S3: AMAZON -->
   <div class="section">
-    <div class="section-title">Amazon — Semaine sélectionnée <span id="amazonWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace"></span></div>
-    <div class="amz-grid" id="amazonCards"></div>
+    <div class="section-title">Amazon — Semaine sélectionnée <span id="amazonWeekLabel" style="font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0.05em;text-transform:none;font-family:'DM Mono',monospace;margin-left:4px"></span></div>
+    <div class="filter-row">
+      <span class="filter-label">Marché</span>
+      <div class="shop-tab active" data-amz="ALL" onclick="selectAmzFilter('ALL',this)">Global</div>
+      <div class="shop-tab" data-amz="USCA" onclick="selectAmzFilter('USCA',this)">US + CA</div>
+      <div class="shop-tab" data-amz="EUUK" onclick="selectAmzFilter('EUUK',this)">EU + UK</div>
+    </div>
+    <div class="stat-grid" id="amazonCards"></div>
+    <div class="subsection-title">Produits vedettes Amazon</div>
+    <div class="coming-soon"><div class="cs-badge">⏳ Coming Soon</div><p>Les produits vedettes Amazon seront disponibles prochainement.</p></div>
+    <div class="subsection-title">Tendance commandes</div>
+    <div class="filter-row" id="amzPeriodRow">
+      <span class="filter-label">Période</span>
+      <div class="period-btn active" onclick="setAmzPeriod(4,this)">4 sem</div>
+      <div class="period-btn" onclick="setAmzPeriod(8,this)">8 sem</div>
+      <div class="period-btn" onclick="setAmzPeriod(13,this)">13 sem</div>
+      <div class="period-btn" onclick="setAmzPeriod(0,this)">Tout</div>
+    </div>
     <div class="chart-row">
-      <div class="chart-card">
-        <h3>Commandes Amazon — évolution</h3>
-        <div class="chart-wrap"><canvas id="chartAmazonTotal"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Répartition US+CA vs EU+UK</h3>
-        <div class="chart-wrap"><canvas id="chartAmazonSplit"></canvas></div>
-      </div>
+      <div class="chart-card"><h3 id="amzChartTitle">Commandes Amazon — Global</h3><div class="chart-wrap"><canvas id="chartAmzMain"></canvas></div></div>
+      <div class="chart-card"><h3>Répartition US+CA vs EU+UK</h3><div class="chart-wrap"><canvas id="chartAmzSplit"></canvas></div></div>
     </div>
   </div>
 
-  <!-- SECTION 4 — ÉVOLUTION -->
+</div>
+</div>
+
+<!-- PAGE EVOLUTION -->
+<div id="page-evolution" class="page">
+<div class="main">
+
   <div class="section">
     <div class="section-title" id="evoTitle">Évolution</div>
-    <div class="chart-row">
-      <div class="chart-card">
-        <h3>CA par shop (€/$)</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoCA"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Commandes par shop</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoOrders"></canvas></div>
-      </div>
+    <div class="filter-row">
+      <span class="filter-label">Période</span>
+      <div class="period-btn active" onclick="setEvoPeriod(4,this)">4 sem</div>
+      <div class="period-btn" onclick="setEvoPeriod(8,this)">8 sem</div>
+      <div class="period-btn" onclick="setEvoPeriod(13,this)">13 sem</div>
+      <div class="period-btn" onclick="setEvoPeriod(26,this)">26 sem</div>
+      <div class="period-btn" onclick="setEvoPeriod(0,this)">Tout</div>
+      <span style="width:12px"></span>
+      <span class="filter-label">Shop</span>
+      <div class="shop-tab active" data-shop="ALL" onclick="selectEvoShop('ALL',this)">Tous</div>
+      <div class="shop-tab" data-shop="US" onclick="selectEvoShop('US',this)">US</div>
+      <div class="shop-tab" data-shop="EU" onclick="selectEvoShop('EU',this)">EU</div>
+      <div class="shop-tab" data-shop="CA" onclick="selectEvoShop('CA',this)">CA</div>
+      <div class="shop-tab" data-shop="UK" onclick="selectEvoShop('UK',this)">UK</div>
     </div>
     <div class="chart-row">
-      <div class="chart-card">
-        <h3>Sessions par shop</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoSessions"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>CVR % par shop</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoCvr"></canvas></div>
-      </div>
+      <div class="chart-card"><h3>CA (€/$)</h3><div class="chart-wrap tall"><canvas id="evoCA"></canvas></div></div>
+      <div class="chart-card"><h3>Commandes</h3><div class="chart-wrap tall"><canvas id="evoOrders"></canvas></div></div>
     </div>
     <div class="chart-row">
-      <div class="chart-card">
-        <h3>Paniers créés par shop</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoCartsCreated"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Taux abandon panier % par shop</h3>
-        <div class="chart-wrap tall"><canvas id="chartEvoAbandon"></canvas></div>
-      </div>
+      <div class="chart-card"><h3>Sessions</h3><div class="chart-wrap tall"><canvas id="evoSessions"></canvas></div></div>
+      <div class="chart-card"><h3>CVR %</h3><div class="chart-wrap tall"><canvas id="evoCvr"></canvas></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>Paniers créés</h3><div class="chart-wrap tall"><canvas id="evoCartsCreated"></canvas></div></div>
+      <div class="chart-card"><h3>Abandon panier %</h3><div class="chart-wrap tall"><canvas id="evoAbandon"></canvas></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>Amazon — commandes totales</h3><div class="chart-wrap tall"><canvas id="evoAmazon"></canvas></div></div>
+      <div class="chart-card"><h3>ATC Rate %</h3><div class="chart-wrap tall"><canvas id="evoAtcRate"></canvas></div></div>
     </div>
   </div>
 
-  <!-- SECTION 5 — HISTORIQUE -->
   <div class="section">
     <div class="section-title">Historique</div>
     <div style="overflow-x:auto">
-      <table class="history-table" id="historyTable">
-        <thead>
-          <tr>
-            <th>Semaine</th>
-            <th>Shop</th>
-            <th>Sessions</th>
-            <th>Commandes</th>
-            <th>CA</th>
-            <th>CVR %</th>
-            <th>AOV</th>
-            <th>Paniers créés</th>
-            <th>Abandonnés</th>
-            <th>Abandon %</th>
-            <th>Add to Cart</th>
-            <th>ATC Rate %</th>
-          </tr>
-        </thead>
+      <table class="history-table">
+        <thead><tr>
+          <th>Semaine</th><th>Shop</th><th>Sessions</th><th>Commandes</th>
+          <th>CA</th><th>CVR %</th><th>AOV</th>
+          <th>Paniers créés</th><th>Abandonnés</th><th>Abandon %</th><th>ATC Rate %</th>
+        </tr></thead>
         <tbody id="historyBody"></tbody>
       </table>
     </div>
   </div>
 
 </div>
+</div>
 
 <script>
-// ── DATA ──
+// ── STATE ──
 let history = [];
 let currentWeek = null;
-let currentShop = 'US';
+let currentPrestaShop = 'ALL';
+let currentAmzFilter = 'ALL';
+let currentEvoShop = 'ALL';
+let evoPeriod = 8;
+let amzPeriod = 4;
 let prestaChartPeriod = 4;
-const shops = ['US', 'EU', 'CA', 'UK'];
-const shopColors = { US: '#F15A29', EU: '#4a9eff', CA: '#2ecc8a', UK: '#a78bfa' };
+let currentYear = 'all';
+const shops = ['US','EU','CA','UK'];
+const shopColors = {US:'#F15A29',EU:'#4a9eff',CA:'#2ecc8a',UK:'#a78bfa'};
 const charts = {};
 
 // ── UTILS ──
 function fmt(v, dec=0) {
   const n = parseFloat(v);
-  if (isNaN(n) || v === '' || v === null) return '—';
-  return dec > 0 ? n.toFixed(dec) : Math.round(n).toLocaleString('fr-FR');
+  if (isNaN(n) || v==='' || v===null || v===undefined) return '—';
+  return dec>0 ? n.toFixed(dec) : Math.round(n).toLocaleString('fr-FR');
 }
-function fmtCurrency(v, currency) {
+function fmtCur(v, shop) {
   const n = parseFloat(v);
-  if (isNaN(n) || v === '' || v === null) return '—';
-  const sym = (currency === 'US' || currency === 'CA') ? '$' : '€';
+  if (isNaN(n) || v==='' || v===null || v===undefined) return '—';
+  const sym = (shop==='US'||shop==='CA') ? '$' : '€';
   return sym + Math.round(n).toLocaleString('fr-FR');
 }
 function delta(cur, prev) {
-  if (!prev || parseFloat(prev) === 0) return null;
-  return ((parseFloat(cur) - parseFloat(prev)) / parseFloat(prev) * 100).toFixed(1);
+  if (!prev || parseFloat(prev)===0) return null;
+  return ((parseFloat(cur)-parseFloat(prev))/Math.abs(parseFloat(prev))*100).toFixed(1);
 }
-function deltaHtml(d, inverted=false) {
-  if (d === null) return '';
-  const good = inverted ? parseFloat(d) < 0 : parseFloat(d) > 0;
-  const cls = parseFloat(d) === 0 ? 'neutral' : (good ? 'up' : 'down');
-  const arrow = parseFloat(d) > 0 ? '↑' : '↓';
-  return `<span class="sc-delta ${cls}">${arrow} ${Math.abs(d)}%</span>`;
+function dHtml(d, inv=false) {
+  if (d===null) return '';
+  const n = parseFloat(d);
+  const good = inv ? n<0 : n>0;
+  const cls = n===0 ? '' : (good ? 'up' : 'down');
+  return `<span class="sc-delta ${cls}" style="font-size:10px">${n>0?'↑':'↓'} ${Math.abs(d)}%</span>`;
 }
-function getWeek() {
-  return document.getElementById('weekPicker').value || currentWeek;
+function getEntry(week) { return history.find(h=>h.week===week)||null; }
+function getPrev(week) {
+  const s = [...history].sort((a,b)=>a.week>b.week?-1:1);
+  const i = s.findIndex(h=>h.week===week);
+  return (i>=0 && i<s.length-1) ? s[i+1] : null;
 }
-function getEntry(week) {
-  return history.find(h => h.week === week) || null;
+function getFiltered() {
+  let h = [...history].sort((a,b)=>a.week<b.week?-1:1);
+  if (currentYear!=='all') h = h.filter(e=>e.week.startsWith(currentYear));
+  return h;
 }
-function getPrevEntry(week) {
-  const idx = history.findIndex(h => h.week === week);
-  if (idx < 0 || idx >= history.length - 1) return null;
-  return history[idx + 1];
+function getPeriod(n) {
+  const h = getFiltered();
+  return n>0 ? h.slice(-n) : h;
 }
-function getSortedHistory() {
-  return [...history].sort((a, b) => a.week < b.week ? -1 : 1);
-}
+function getNWeeks() { return getFiltered().length; }
 
-// ── LOAD DATA ──
-function loadData(callback) {
-  try { history = JSON.parse(localStorage.getItem('wp_kpi_history') || '[]'); } catch(e) { history = []; }
-  fetch('wellputt-data.json?t=' + Date.now())
-    .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
-    .then(data => {
-      const incoming = Array.isArray(data) ? data : [data];
-      incoming.forEach(entry => {
-        if (!entry || !entry.week) return;
-        ['US','EU','CA','UK'].forEach(s => {
-          const sh = entry.shops?.[s];
-          if (!sh) return;
-          const sess = parseFloat(sh.sessions) || 0;
-          const tx   = parseFloat(sh.transactions) || 0;
-          const rev  = parseFloat(sh.revenue) || 0;
-          const atc  = parseFloat(sh.add_to_cart) || 0;
-          if (!sh.cvr || sh.cvr === '0')  sh.cvr = sess > 0 ? (tx/sess*100).toFixed(2) : '0';
-          if (!sh.aov || sh.aov === '0')  sh.aov = tx > 0 ? (rev/tx).toFixed(0) : '0';
-          if (!sh.atcRate || sh.atcRate === '0') sh.atcRate = sess > 0 ? (atc/sess*100).toFixed(1) : '0';
-        });
-        const idx = history.findIndex(h => h.week === entry.week);
-        if (idx >= 0) history[idx] = entry;
-        else history.push(entry);
-      });
-      history.sort((a, b) => a.week > b.week ? -1 : 1);
-      try { localStorage.setItem('wp_kpi_history', JSON.stringify(history)); } catch(e) {}
-      callback();
-    })
-    .catch(() => callback());
-}
+// ── LOAD DATA (fetches all weekly files) ──
+async function loadData() {
+  // 1. Fetch index.json to get list of available weeks
+  let weeks = [];
+  try {
+    const r = await fetch('data/index.json?t='+Date.now());
+    if (r.ok) weeks = await r.json();
+  } catch(e) {}
 
-// ── REFRESH ──
-function refreshData() {
-  const btn = document.getElementById('refreshBtn');
-  const icon = document.getElementById('refreshIcon');
-  btn.classList.add('loading');
-  icon.classList.add('spin');
-  icon.textContent = '↻';
-  loadData(() => {
-    btn.classList.remove('loading');
-    icon.classList.remove('spin');
-    renderAll();
-    document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-  });
-}
-
-// ── WEEK ──
-function initWeekPicker() {
-  const picker = document.getElementById('weekPicker');
-  if (history.length > 0) {
-    currentWeek = history[0].week;
-    picker.value = currentWeek;
-  } else {
-    const now = new Date();
-    const jan4 = new Date(now.getFullYear(), 0, 4);
-    const week = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-    currentWeek = `${now.getFullYear()}-W${String(week).padStart(2,'0')}`;
-    picker.value = currentWeek;
-  }
-}
-function onWeekChange() {
-  currentWeek = getWeek();
-  renderAll();
-}
-
-// ── SECTION 1: GLOBAL CARDS ──
-function renderGlobalCards() {
-  const week = getWeek();
-  const entry = getEntry(week);
-  const prev = getPrevEntry(week);
-  document.getElementById('globalWeekLabel').textContent = week || '—';
-  if(document.getElementById('prestaWeekLabel')) document.getElementById('prestaWeekLabel').textContent = week||'';
-  if(document.getElementById('amazonWeekLabel')) document.getElementById('amazonWeekLabel').textContent = week||'';
-
-  if (!entry) {
-    document.getElementById('globalCards').innerHTML = '<div class="no-data">Aucune donnée pour cette semaine.</div>';
+  if (!weeks.length) {
+    // Fallback: try to load legacy wellputt-data.json
+    try {
+      const r = await fetch('wellputt-data.json?t='+Date.now());
+      if (r.ok) {
+        const d = await r.json();
+        const incoming = Array.isArray(d) ? d : [d];
+        incoming.forEach(e => mergeEntry(e));
+      }
+    } catch(e) {}
     return;
   }
 
-  const totalTx = shops.reduce((s, sh) => s + (parseFloat(entry.shops?.[sh]?.transactions) || 0), 0);
-  const totalRev = shops.reduce((s, sh) => s + (parseFloat(entry.shops?.[sh]?.revenue) || 0), 0);
-  const totalSess = shops.reduce((s, sh) => s + (parseFloat(entry.shops?.[sh]?.sessions) || 0), 0);
-  const totalCarts = shops.reduce((s, sh) => s + (parseFloat(entry.shops?.[sh]?.carts_created) || 0), 0);
-  const amzOrders = entry.amazon?.orders || 0;
+  // 2. Fetch all weekly files in parallel
+  const fetches = weeks.map(w =>
+    fetch(`data/wellputt-data-${w}.json?t=`+Date.now())
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+  );
+  const results = await Promise.all(fetches);
+  results.forEach(e => { if (e) mergeEntry(e); });
+}
 
-  const prevTx = prev ? shops.reduce((s, sh) => s + (parseFloat(prev.shops?.[sh]?.transactions) || 0), 0) : 0;
-  const prevRev = prev ? shops.reduce((s, sh) => s + (parseFloat(prev.shops?.[sh]?.revenue) || 0), 0) : 0;
-  const prevSess = prev ? shops.reduce((s, sh) => s + (parseFloat(prev.shops?.[sh]?.sessions) || 0), 0) : 0;
+function mergeEntry(entry) {
+  if (!entry || !entry.week) return;
+  // Recalc missing derived fields
+  shops.forEach(s => {
+    const sh = entry.shops?.[s];
+    if (!sh) return;
+    const sess=parseFloat(sh.sessions)||0, tx=parseFloat(sh.transactions)||0, rev=parseFloat(sh.revenue)||0, atc=parseFloat(sh.add_to_cart)||0;
+    if (!sh.cvr||sh.cvr==='0') sh.cvr = sess>0?(tx/sess*100).toFixed(2):'0';
+    if (!sh.aov||sh.aov==='0') sh.aov = tx>0?(rev/tx).toFixed(0):'0';
+    if (!sh.atcRate||sh.atcRate==='0') sh.atcRate = sess>0?(atc/sess*100).toFixed(1):'0';
+  });
+  const idx = history.findIndex(h=>h.week===entry.week);
+  if (idx>=0) history[idx]=entry; else history.push(entry);
+}
 
-  const dTx = prev ? delta(totalTx, prevTx) : null;
-  const dRev = prev ? delta(totalRev, prevRev) : null;
-  const dSess = prev ? delta(totalSess, prevSess) : null;
+// ── REFRESH ──
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.classList.add('loading'); icon.classList.add('spin');
+  history = []; // Clear and reload fresh
+  await loadData();
+  history.sort((a,b)=>a.week>b.week?-1:1);
+  populateYearFilter();
+  renderAll();
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  btn.classList.remove('loading'); icon.classList.remove('spin');
+}
 
+// ── YEAR / WEEK ──
+function populateYearFilter() {
+  const years = [...new Set(history.map(h=>h.week.split('-W')[0]))].sort().reverse();
+  const sel = document.getElementById('yearFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">Toutes</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if (years.includes(cur)) sel.value = cur;
+}
+function onYearChange() {
+  currentYear = document.getElementById('yearFilter').value;
+  renderAll();
+}
+function onWeekChange() {
+  currentWeek = document.getElementById('weekPicker').value;
+  renderDashboard();
+}
+function initWeekPicker() {
+  if (history.length>0) {
+    currentWeek = history[0].week;
+    document.getElementById('weekPicker').value = currentWeek;
+  }
+}
+
+// ── PAGE ──
+function switchPage(page, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  if (page==='evolution') renderEvolution();
+}
+
+// ── S1: GLOBAL ──
+function renderGlobal() {
+  const entry = getEntry(currentWeek);
+  const prev = getPrev(currentWeek);
+  document.getElementById('globalWeekLabel').textContent = currentWeek||'';
+  if(document.getElementById('prestaWeekLabel')) document.getElementById('prestaWeekLabel').textContent = currentWeek||'';
+  if(document.getElementById('amazonWeekLabel')) document.getElementById('amazonWeekLabel').textContent = currentWeek||'';
+  if (!entry) { document.getElementById('globalCards').innerHTML='<div class="loading-bar">Aucune donnée pour cette semaine.</div>'; return; }
+
+  const tot = f => shops.reduce((s,sh)=>s+(parseFloat(entry.shops?.[sh]?.[f])||0),0);
+  const totP = f => prev ? shops.reduce((s,sh)=>s+(parseFloat(prev.shops?.[sh]?.[f])||0),0) : 0;
+  const totalTx=tot('transactions'), totalRev=tot('revenue'), totalSess=tot('sessions'), totalCarts=tot('carts_created');
+  const globalCvr = totalSess>0 ? (totalTx/totalSess*100).toFixed(2) : '0';
+  const prevCvr = totP('sessions')>0 ? (totP('transactions')/totP('sessions')*100).toFixed(2) : '0';
+  const amz = entry.amazon?.orders||0;
+  const prevAmz = prev?.amazon?.orders||0;
+
+  const shopCards = shops.map(sh => {
+    const d = entry.shops?.[sh]; if (!d) return '';
+    const rev=parseFloat(d.revenue)||0, tx=parseFloat(d.transactions)||0;
+    const pRev = prev?parseFloat(prev.shops?.[sh]?.revenue)||0:null;
+    return `<div class="stat-card">
+      <div class="sc-label" style="color:${shopColors[sh]};font-weight:700">${sh}</div>
+      <div class="sc-value">${fmtCur(rev,sh)}</div>
+      <div class="sc-delta">${tx} cmd${tx>1?'s':''} ${pRev!==null?dHtml(delta(rev,pRev)):''}</div>
+    </div>`;
+  }).join('');
 
   // Global abandon
   const totalCC = shops.reduce((s,sh)=>s+(parseFloat(entry.shops?.[sh]?.carts_created)||0),0);
@@ -514,276 +556,268 @@ function renderGlobalCards() {
   const globalAbandon = totalCC>0?(totalCA/totalCC*100).toFixed(1):'0';
   const prevAbandon = prevCC>0?(prevCA/prevCC*100).toFixed(1):'0';
 
-  // Per-shop mini CA cards
-  const shopCards = shops.map(sh => {
-    const d = entry.shops?.[sh];
-    if (!d) return '';
-    const rev = parseFloat(d.revenue) || 0;
-    const tx = parseFloat(d.transactions) || 0;
-    const pRev = prev ? parseFloat(prev.shops?.[sh]?.revenue) || 0 : null;
-    const dR = pRev !== null ? delta(rev, pRev) : null;
-    return `<div class="stat-card">
-      <div class="sc-label" style="color:${shopColors[sh]};font-weight:700">${sh}</div>
-      <div class="sc-value">${fmtCurrency(rev, sh)}</div>
-      <div class="sc-delta">${tx} cmd${tx > 1 ? 's' : ''} ${deltaHtml(dR)}</div>
-    </div>`;
-  }).join('');
-
   document.getElementById('globalCards').innerHTML = `
-    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:0">
-      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${deltaHtml(dTx)}</div></div>
-      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCurrency(totalRev,'EU')}</div><div>${deltaHtml(dRev)}</div></div>
-      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${totalSess>0?(totalTx/totalSess*100).toFixed(2):'0'}%</div><div></div></div>
-      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${deltaHtml(dSess)}</div></div>
-      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${amzOrders||'—'}</div><div></div></div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,totP('transactions')))}</div></div>
+      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div>${dHtml(delta(totalRev,totP('revenue')))}</div></div>
+      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div></div>
+      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${dHtml(delta(totalSess,totP('sessions')))}</div></div>
+      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${amz||'—'}</div><div>${dHtml(delta(amz,prevAmz))}</div></div>
     </div>
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
       ${shopCards}
-      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div>${deltaHtml(delta(globalAbandon,prevAbandon),true)}</div></div>
+      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div>${dHtml(delta(globalAbandon,prevAbandon),true)}</div></div>
     </div>`;
 }
 
-// ── SECTION 2: SHOP DETAIL ──
+// ── S2: PRESTA ──
 function setPrestaChartPeriod(n, el) {
   prestaChartPeriod = n;
-  document.querySelectorAll('#prestaPeriodFilter .period-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#prestaPeriodRow .period-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  renderShopDetail();
+  renderPresta();
 }
 
-function selectShop(shop, el) {
-  currentShop = shop;
-  document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+function selectPrestaShop(shop, el) {
+  currentPrestaShop = shop;
+  document.querySelectorAll('#page-dashboard .filter-row .shop-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  renderShopDetail();
+  renderPresta();
 }
+function renderPresta() {
+  const entry = getEntry(currentWeek);
+  const prev = getPrev(currentWeek);
+  const sh = currentPrestaShop;
+  const isAll = sh==='ALL';
+  if (!entry) { document.getElementById('prestaKpis').innerHTML='<div class="loading-bar">Aucune donnée.</div>'; return; }
 
-function renderShopDetail() {
-  const week = getWeek();
-  const entry = getEntry(week);
-  const prev = getPrevEntry(week);
-  const sh = currentShop;
-  const color = shopColors[sh];
-  const cls = sh.toLowerCase();
+  const n = getNWeeks();
+  document.getElementById('prestaChartTitle').textContent = `Tendances — ${n} semaine${n>1?'s':''}`;
 
-  if (!entry?.shops?.[sh]) {
-    document.getElementById('shopKpis').innerHTML = '<div class="no-data">Aucune donnée.</div>';
-    document.getElementById('shopFunnel').innerHTML = '';
-    return;
+  let kpis = [];
+  if (isAll) {
+    const tot = f => shops.reduce((s,shop)=>s+(parseFloat(entry.shops?.[shop]?.[f])||0),0);
+    const totP = f => prev?shops.reduce((s,shop)=>s+(parseFloat(prev.shops?.[shop]?.[f])||0),0):null;
+    const tx=tot('transactions'),rev=tot('revenue'),sess=tot('sessions'),cc=tot('carts_created'),ca=tot('carts_abandoned');
+    const cvr = sess>0?(tx/sess*100).toFixed(2):'0';
+    kpis = [
+      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,totP('sessions')))},
+      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,totP('transactions')))},
+      {l:'CA Total',v:fmtCur(rev,'EU'),s:dHtml(delta(rev,totP('revenue')))},
+      {l:'CVR',v:cvr+'%',s:''},
+      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,totP('carts_created')))},
+      {l:'Paniers abandonnés',v:fmt(ca),s:''},
+    ];
+    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+    document.getElementById('prestaFunnel').innerHTML='';
+  } else {
+    const d = entry.shops?.[sh]; if (!d) { document.getElementById('prestaKpis').innerHTML=''; document.getElementById('prestaFunnel').innerHTML=''; return; }
+    const p = prev?.shops?.[sh];
+    const sess=parseFloat(d.sessions)||0, tx=parseFloat(d.transactions)||0, rev=parseFloat(d.revenue)||0;
+    const atc=parseFloat(d.add_to_cart)||0, cc=parseFloat(d.carts_created)||0, ca=parseFloat(d.carts_abandoned)||0;
+    const cls=sh.toLowerCase(), color=shopColors[sh];
+    kpis = [
+      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,p?.sessions))},
+      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,p?.transactions))},
+      {l:'CA',v:fmtCur(rev,sh),s:dHtml(delta(rev,p?.revenue))},
+      {l:'CVR',v:(d.cvr||'0')+'%',s:dHtml(delta(d.cvr,p?.cvr))},
+      {l:'AOV',v:fmtCur(d.aov,sh),s:dHtml(delta(d.aov,p?.aov))},
+      {l:'Add to Cart',v:fmt(atc),s:d.atcRate?(d.atcRate+'%'):''},
+      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,p?.carts_created))},
+      {l:'Paniers abandonnés',v:fmt(ca),s:dHtml(delta(ca,p?.carts_abandoned))},
+      {l:'Abandon %',v:(d.abandon||'0')+'%',s:dHtml(delta(d.abandon,p?.abandon),true)},
+    ];
+    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card ${cls}"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+
+    // Funnel: Sessions → Paniers créés → Paniers abandonnés → Commandes
+    const funnelMax = sess;
+    const fdata = [
+      {label:'Sessions', val:sess, pct:100},
+      {label:'Paniers créés', val:cc, pct:funnelMax>0?cc/funnelMax*100:0},
+      {label:'Paniers abandonnés', val:ca, pct:funnelMax>0?ca/funnelMax*100:0},
+      {label:'Commandes', val:tx, pct:funnelMax>0?tx/funnelMax*100:0},
+    ];
+    document.getElementById('prestaFunnel').innerHTML = `
+      <div class="funnel-card">
+        <div class="funnel-title">Funnel de conversion</div>
+        <div class="funnel">
+          ${fdata.map(f=>`<div class="funnel-row">
+            <div class="funnel-step">${f.label}</div>
+            <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${f.pct}%;background:${color}"></div></div>
+            <div class="funnel-val">${fmt(f.val)}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
   }
-
-  const d = entry.shops[sh];
-  const p = prev?.shops?.[sh];
-  const sess = parseFloat(d.sessions) || 0;
-  const tx = parseFloat(d.transactions) || 0;
-  const rev = parseFloat(d.revenue) || 0;
-  const cvr = parseFloat(d.cvr) || 0;
-  const aov = parseFloat(d.aov) || 0;
-  const atc = parseFloat(d.add_to_cart) || 0;
-  const atcRate = parseFloat(d.atcRate) || 0;
-  const cc = parseFloat(d.carts_created) || 0;
-  const ca = parseFloat(d.carts_abandoned) || 0;
-  const ab = parseFloat(d.abandon) || 0;
-
-  const kpis = [
-    { label: 'Sessions', val: fmt(sess), sub: p ? deltaHtml(delta(sess, p.sessions)) : '' },
-    { label: 'Commandes', val: fmt(tx), sub: p ? deltaHtml(delta(tx, p.transactions)) : '' },
-    { label: 'CA', val: fmtCurrency(rev, sh), sub: p ? deltaHtml(delta(rev, p.revenue)) : '' },
-    { label: 'CVR', val: cvr + '%', sub: p ? deltaHtml(delta(cvr, p.cvr)) : '' },
-    { label: 'AOV', val: fmtCurrency(aov, sh), sub: p ? deltaHtml(delta(aov, p.aov)) : '' },
-    { label: 'Paniers créés', val: fmt(cc), sub: p ? deltaHtml(delta(cc, p.carts_created)) : '' },
-    { label: 'Abandonnés', val: fmt(ca), sub: '' },
-    { label: 'Abandon %', val: ab + '%', sub: p ? deltaHtml(delta(ab, p.abandon), true) : '' },
-  ];
-
-  document.getElementById('shopKpis').innerHTML = kpis.map(k => `
-    <div class="kpi-card ${cls}">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-val">${k.val}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
-
-  // Funnel
-  const funnelData = [
-    { label: 'Sessions', val: sess, pct: 100 },
-    { label: 'Ajouts panier', val: atc, pct: sess > 0 ? atc/sess*100 : 0 },
-    { label: 'Paniers créés', val: cc, pct: sess > 0 ? cc/sess*100 : 0 },
-    { label: 'Commandes', val: tx, pct: sess > 0 ? tx/sess*100 : 0 },
-  ];
-  document.getElementById('shopFunnel').innerHTML = funnelData.map(f => `
-    <div class="funnel-row">
-      <div class="funnel-label">${f.label}</div>
-      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${f.pct}%;background:${color}"></div></div>
-      <div class="funnel-val">${fmt(f.val)} <span style="color:var(--muted);font-size:10px">(${f.pct.toFixed(1)}%)</span></div>
-    </div>`).join('');
 
   // Charts
-  const allSorted = getSortedHistory();
-  const sorted = prestaChartPeriod > 0 ? allSorted.slice(-prestaChartPeriod) : allSorted;
-  const labels = sorted.map(h => h.week.replace(/\d{4}-/, ''));
-  const cvrData = sorted.map(h => parseFloat(h.shops?.[sh]?.cvr) || null);
-  const abandonData = sorted.map(h => parseFloat(h.shops?.[sh]?.abandon) || null);
-
-  makeChart('chartShopCvr', 'line', labels, [{
-    label: 'CVR %', data: cvrData,
-    borderColor: color, backgroundColor: color + '22',
-    tension: 0.3, fill: true, borderWidth: 2, pointRadius: 4
-  }]);
-  makeChart('chartShopAbandon', 'line', labels, [{
-    label: 'Abandon %', data: abandonData,
-    borderColor: color, backgroundColor: color + '22',
-    tension: 0.3, fill: true, borderWidth: 2, pointRadius: 4
-  }]);
+  const sorted = getPeriod(evoPeriod);
+  const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
+  if (isAll) {
+    const cvrD = sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
+    const abD = sorted.map(h=>{const cc=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_created)||0),0);const ca=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_abandoned)||0),0);return cc>0?parseFloat((ca/cc*100).toFixed(1)):null;});
+    mkChart('chartCvr','line',labels,[{label:'CVR %',data:cvrD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+    mkChart('chartAbandon','line',labels,[{label:'Abandon %',data:abD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+  } else {
+    const color=shopColors[sh];
+    mkChart('chartCvr','line',labels,[{label:'CVR %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.cvr)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+    mkChart('chartAbandon','line',labels,[{label:'Abandon %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.abandon)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+  }
 }
 
-// ── SECTION 3: AMAZON ──
+// ── S3: AMAZON ──
+function selectAmzFilter(f, el) {
+  currentAmzFilter = f;
+  document.querySelectorAll('#page-dashboard .section:nth-child(3) .filter-row .shop-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('amzChartTitle').textContent = 'Commandes Amazon — ' + {ALL:'Global',USCA:'US+CA',EUUK:'EU+UK'}[f];
+  renderAmazon();
+}
+function setAmzPeriod(n, el) {
+  amzPeriod = n;
+  document.querySelectorAll('#amzPeriodRow .period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderAmazon();
+}
 function renderAmazon() {
-  const week = getWeek();
-  const entry = getEntry(week);
-  const prev = getPrevEntry(week);
-  const sorted = getSortedHistory();
-  const labels = sorted.map(h => h.week.replace('2026-', ''));
-
-  const total = entry?.amazon?.orders || 0;
-  const prevTotal = prev?.amazon?.orders || 0;
-  const dAmz = prev ? delta(total, prevTotal) : null;
-
-  // US+CA vs EU+UK (approx depuis les amazon_orders des commandes si dispo)
-  const usca = (parseFloat(entry?.shops?.US?.transactions) || 0) > 0 ? 'US+CA' : null;
+  const entry = getEntry(currentWeek);
+  const prev = getPrev(currentWeek);
+  const total = entry?.amazon?.orders||0;
+  const prevTotal = prev?.amazon?.orders||0;
 
   document.getElementById('amazonCards').innerHTML = `
-    <div class="stat-card">
-      <div class="sc-label">Total Amazon</div>
-      <div class="sc-value orange">${total || '—'}</div>
-      <div>${deltaHtml(dAmz)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="sc-label">US marketplace</div>
-      <div class="sc-value" style="color:var(--us)">US + CA</div>
-      <div class="sc-delta neutral">Amazon.com</div>
-    </div>
-    <div class="stat-card">
-      <div class="sc-label">EU marketplace</div>
-      <div class="sc-value" style="color:var(--eu)">EU + UK</div>
-      <div class="sc-delta neutral">Amazon.fr / .co.uk</div>
-    </div>
-  `;
+    <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div></div>
+    <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="font-size:16px;padding-top:4px;color:var(--us)">Amazon.com</div><div class="sc-delta">Marketplace US</div></div>
+    <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="font-size:16px;padding-top:4px;color:var(--eu)">Amazon.eu</div><div class="sc-delta">Marketplace EU</div></div>`;
 
-  const amzTotals = sorted.map(h => h.amazon?.orders || 0);
-  makeChart('chartAmazonTotal', 'bar', labels, [{
-    label: 'Commandes', data: amzTotals,
-    backgroundColor: '#F15A2988', borderColor: '#F15A29', borderWidth: 1, borderRadius: 4
-  }]);
+  const sorted = getPeriod(amzPeriod);
+  const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
+  const totData = sorted.map(h=>h.amazon?.orders||0);
+  // Approx split based on ratio US/EU shops transactions
+  const uscaData = sorted.map(h=>{
+    const us=(parseFloat(h.shops?.US?.transactions)||0)+(parseFloat(h.shops?.CA?.transactions)||0);
+    const eu=(parseFloat(h.shops?.EU?.transactions)||0)+(parseFloat(h.shops?.UK?.transactions)||0);
+    const tot=us+eu; const amz=h.amazon?.orders||0;
+    return tot>0?Math.round(amz*us/tot):Math.round(amz*0.6);
+  });
+  const euukData = totData.map((t,i)=>Math.max(0,t-uscaData[i]));
 
-  makeChart('chartAmazonSplit', 'bar', labels, [
-    { label: 'US+CA', data: sorted.map(h => Math.round((h.amazon?.orders || 0) * 0.6)), backgroundColor: '#F15A2988', borderColor: '#F15A29', borderWidth: 1, borderRadius: 4 },
-    { label: 'EU+UK', data: sorted.map(h => Math.round((h.amazon?.orders || 0) * 0.4)), backgroundColor: '#4a9eff88', borderColor: '#4a9eff', borderWidth: 1, borderRadius: 4 },
-  ], {}, true);
+  let mainData, mainColor;
+  if (currentAmzFilter==='USCA'){mainData=uscaData;mainColor='#F15A29';}
+  else if (currentAmzFilter==='EUUK'){mainData=euukData;mainColor='#4a9eff';}
+  else{mainData=totData;mainColor='#1a1917';}
+
+  mkChart('chartAmzMain','bar',labels,[{label:'Commandes',data:mainData,backgroundColor:mainColor+'88',borderColor:mainColor,borderWidth:1,borderRadius:4}]);
+  mkChart('chartAmzSplit','bar',labels,[
+    {label:'US+CA',data:uscaData,backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4},
+    {label:'EU+UK',data:euukData,backgroundColor:'#4a9eff88',borderColor:'#4a9eff',borderWidth:1,borderRadius:4},
+  ],{},true);
 }
 
-// ── SECTION 4: ÉVOLUTION ──
+// ── EVOLUTION ──
+function setEvoPeriod(n, el) {
+  evoPeriod = n;
+  document.querySelectorAll('#page-evolution .period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderEvolution();
+}
+function selectEvoShop(shop, el) {
+  currentEvoShop = shop;
+  document.querySelectorAll('#page-evolution .shop-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderEvolution();
+}
 function renderEvolution() {
-  const sorted = getSortedHistory();
-  const labels = sorted.map(h => h.week.replace('2026-', ''));
+  const sorted = getPeriod(evoPeriod);
+  const n = sorted.length;
+  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n>1?'s':''}`;
+  const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
+  const shopsShow = currentEvoShop==='ALL' ? shops : [currentEvoShop];
 
-  const ds = (field, transform) => shops.map(sh => ({
-    label: sh,
-    data: sorted.map(h => {
-      const v = parseFloat(h.shops?.[sh]?.[field]);
-      return isNaN(v) ? null : (transform ? transform(v) : v);
-    }),
-    borderColor: shopColors[sh],
-    backgroundColor: shopColors[sh] + '33',
-    tension: 0.3, fill: false, borderWidth: 2, pointRadius: 3
+  const ds = field => shopsShow.map(sh=>({
+    label:sh, data:sorted.map(h=>{const v=parseFloat(h.shops?.[sh]?.[field]);return isNaN(v)?null:v;}),
+    borderColor:shopColors[sh], backgroundColor:shopColors[sh]+'33',
+    tension:0.3, fill:false, borderWidth:2, pointRadius:3
   }));
 
-  makeChart('chartEvoCA', 'line', labels, ds('revenue'));
-  makeChart('chartEvoOrders', 'line', labels, ds('transactions'));
-  makeChart('chartEvoSessions', 'line', labels, ds('sessions'));
-  makeChart('chartEvoCvr', 'line', labels, ds('cvr'));
-  makeChart('chartEvoCartsCreated', 'line', labels, ds('carts_created'));
-  makeChart('chartEvoAbandon', 'line', labels, ds('abandon'));
+  mkChart('evoCA','line',labels,ds('revenue'));
+  mkChart('evoOrders','line',labels,ds('transactions'));
+  mkChart('evoSessions','line',labels,ds('sessions'));
+  mkChart('evoCvr','line',labels,ds('cvr'));
+  mkChart('evoCartsCreated','line',labels,ds('carts_created'));
+  mkChart('evoAbandon','line',labels,ds('abandon'));
+  mkChart('evoAtcRate','line',labels,ds('atcRate'));
+  mkChart('evoAmazon','bar',labels,[{label:'Amazon',data:sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4}]);
+
+  renderHistory(sorted);
 }
-
-// ── SECTION 5: HISTORIQUE ──
-function renderHistory() {
-  const sorted = getSortedHistory().reverse(); // oldest first in table
-  const week = getWeek();
-  const tbody = document.getElementById('historyBody');
-
-  if (!sorted.length) {
-    tbody.innerHTML = '<tr><td colspan="12" class="no-data">Aucune donnée.</td></tr>';
-    return;
-  }
-
+function renderHistory(sorted) {
+  const week = currentWeek;
   let rows = '';
-  sorted.slice().reverse().forEach(entry => { // newest first
-    const isCurrent = entry.week === week;
-    shops.forEach(sh => {
-      const d = entry.shops?.[sh];
-      if (!d) return;
-      rows += `<tr class="${isCurrent ? 'week-current' : ''}">
-        <td>${isCurrent ? '★ ' : ''}${entry.week}</td>
+  [...sorted].reverse().forEach(entry=>{
+    const isCur = entry.week===week;
+    shops.forEach(sh=>{
+      const d=entry.shops?.[sh]; if(!d) return;
+      rows += `<tr class="${isCur?'week-current':''}">
+        <td>${isCur?'★ ':''}${entry.week}</td>
         <td><span class="shop-dot" style="background:${shopColors[sh]}"></span>${sh}</td>
-        <td>${fmt(d.sessions)}</td>
-        <td>${fmt(d.transactions)}</td>
-        <td>${fmtCurrency(d.revenue, sh)}</td>
-        <td>${d.cvr ? d.cvr + '%' : '—'}</td>
-        <td>${fmtCurrency(d.aov, sh)}</td>
-        <td>${fmt(d.carts_created)}</td>
-        <td>${fmt(d.carts_abandoned)}</td>
-        <td>${d.abandon ? d.abandon + '%' : '—'}</td>
-        <td>${fmt(d.add_to_cart)}</td>
-        <td>${d.atcRate ? d.atcRate + '%' : '—'}</td>
+        <td>${fmt(d.sessions)}</td><td>${fmt(d.transactions)}</td>
+        <td>${fmtCur(d.revenue,sh)}</td><td>${d.cvr?d.cvr+'%':'—'}</td>
+        <td>${fmtCur(d.aov,sh)}</td>
+        <td>${fmt(d.carts_created)}</td><td>${fmt(d.carts_abandoned)}</td>
+        <td>${d.abandon?d.abandon+'%':'—'}</td><td>${d.atcRate?d.atcRate+'%':'—'}</td>
       </tr>`;
     });
   });
-  tbody.innerHTML = rows;
+  document.getElementById('historyBody').innerHTML = rows||'<tr><td colspan="11" class="loading-bar">Aucune donnée.</td></tr>';
 }
 
 // ── CHART HELPER ──
-function makeChart(id, type, labels, datasets, extraOptions={}, stacked=false) {
-  if (charts[id]) { charts[id].destroy(); }
+function mkChart(id, type, labels, datasets, extra={}, stacked=false) {
+  if (charts[id]) { try{charts[id].destroy();}catch(e){} }
   const canvas = document.getElementById(id);
   if (!canvas) return;
   charts[id] = new Chart(canvas.getContext('2d'), {
-    type,
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: datasets.length > 1, labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 10, padding: 12 } }, tooltip: { mode: 'index', intersect: false } },
-      scales: {
-        x: { stacked, grid: { display: false }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#a09a94' }, border: { display: false } },
-        y: { stacked, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#a09a94' }, border: { display: false } }
+    type, data:{labels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:datasets.length>1,labels:{font:{family:'DM Sans',size:10},boxWidth:10,padding:12,color:'#5a5650'}},
+        tooltip:{mode:'index',intersect:false}
       },
-      interaction: { mode: 'index', intersect: false },
-      ...extraOptions
+      scales:{
+        x:{stacked,grid:{display:false},ticks:{font:{family:'DM Mono',size:9},color:'#8a8480'},border:{display:false}},
+        y:{stacked,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'DM Mono',size:9},color:'#8a8480'},border:{display:false}}
+      },
+      interaction:{mode:'index',intersect:false},
+      ...extra
     }
   });
 }
 
-// ── RENDER ALL ──
-function renderAll() {
-  const n = history.length;
-  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n > 1 ? 's' : ''}`;
-  document.querySelectorAll('.nweeks').forEach(el => el.textContent = n);
-  // Update presta chart h3 titles dynamically based on period
-  const pn = prestaChartPeriod > 0 ? prestaChartPeriod : getSortedHistory().length;
-  renderGlobalCards();
-  renderShopDetail();
+// ── RENDER ──
+function renderDashboard() {
+  renderGlobal();
+  renderPresta();
   renderAmazon();
-  renderEvolution();
-  renderHistory();
+}
+function renderAll() {
+  renderDashboard();
+  // Re-render evo if active
+  if (document.getElementById('page-evolution').classList.contains('active')) renderEvolution();
 }
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', () => {
-  loadData(() => {
-    initWeekPicker();
-    renderAll();
-    document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-  });
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('lastUpdate').textContent = 'Chargement des données...';
+  await loadData();
+  history.sort((a,b)=>a.week>b.week?-1:1);
+  populateYearFilter();
+  initWeekPicker();
+  renderAll();
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 });
 </script>
 </body>
