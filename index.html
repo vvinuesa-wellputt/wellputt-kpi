@@ -608,6 +608,9 @@ function renderPresta() {
     ];
     document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
     document.getElementById('prestaFunnel').innerHTML='';
+    // Top products global
+    const allProds = shops.map(sh => entry.products?.[sh] || '').filter(Boolean).join('||');
+    renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917');
   } else {
     const d = entry.shops?.[sh]; if (!d) { document.getElementById('prestaKpis').innerHTML=''; document.getElementById('prestaFunnel').innerHTML=''; return; }
     const p = prev?.shops?.[sh];
@@ -635,6 +638,8 @@ function renderPresta() {
       {label:'Paniers abandonnés', val:ca, pct:funnelMax>0?ca/funnelMax*100:0},
       {label:'Commandes', val:tx, pct:funnelMax>0?tx/funnelMax*100:0},
     ];
+    const shopProds = entry.products?.[sh] || '';
+    renderTopProducts('prestaTopProducts', getTopProducts(shopProds, 4), shopColors[sh]);
     document.getElementById('prestaFunnel').innerHTML = `
       <div class="funnel-card">
         <div class="funnel-title">Funnel de conversion</div>
