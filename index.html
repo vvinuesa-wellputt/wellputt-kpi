@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wellputt — KPI Dashboard</title>
+<title>Wellputt — E-COMMERCE KPI Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <script>/* Chart.js 4.4.1 - embedded */
 /*!
@@ -591,7 +591,7 @@ function renderPresta() {
   const isAll = sh==='ALL';
   if (!entry) { document.getElementById('prestaKpis').innerHTML='<div class="loading-bar">Aucune donnée.</div>'; return; }
 
-  const n = prestaChartPeriod > 0 ? Math.min(prestaChartPeriod, getFiltered().length) : getFiltered().length;
+  const n = getNWeeks();
   document.getElementById('prestaChartTitle').textContent = `Tendances — ${n} semaine${n>1?'s':''}`;
 
   let kpis = [];
@@ -651,7 +651,7 @@ function renderPresta() {
   }
 
   // Charts
-  const sorted = getPeriod(prestaChartPeriod);
+  const sorted = getPeriod(evoPeriod);
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   if (isAll) {
     const cvrD = sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
@@ -685,10 +685,21 @@ function renderAmazon() {
   const total = entry?.amazon?.orders||0;
   const prevTotal = prev?.amazon?.orders||0;
 
+  // Estimation USCA/EUUK split basée sur ratio transactions Presta
+  const usca_tx = (parseFloat(entry?.shops?.US?.transactions)||0)+(parseFloat(entry?.shops?.CA?.transactions)||0);
+  const euuk_tx = (parseFloat(entry?.shops?.EU?.transactions)||0)+(parseFloat(entry?.shops?.UK?.transactions)||0);
+  const total_tx = usca_tx+euuk_tx;
+  const usca_amz = total_tx>0?Math.round(total*usca_tx/total_tx):Math.round(total*0.6);
+  const euuk_amz = Math.max(0, total-usca_amz);
+  const prev_usca_tx = prev?(parseFloat(prev?.shops?.US?.transactions)||0)+(parseFloat(prev?.shops?.CA?.transactions)||0):0;
+  const prev_euuk_tx = prev?(parseFloat(prev?.shops?.EU?.transactions)||0)+(parseFloat(prev?.shops?.UK?.transactions)||0):0;
+  const prev_ttx = prev_usca_tx+prev_euuk_tx;
+  const prev_usca_amz = prev&&prev_ttx>0?Math.round(prevTotal*prev_usca_tx/prev_ttx):Math.round((prevTotal||0)*0.6);
+  const prev_euuk_amz = Math.max(0,(prevTotal||0)-prev_usca_amz);
   document.getElementById('amazonCards').innerHTML = `
     <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div></div>
-    <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="font-size:16px;padding-top:4px;color:var(--us)">Amazon.com</div><div class="sc-delta">Marketplace US</div></div>
-    <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="font-size:16px;padding-top:4px;color:var(--eu)">Amazon.eu</div><div class="sc-delta">Marketplace EU</div></div>`;
+    <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="color:var(--us)">${usca_amz||'—'}</div><div class="sc-delta">Amazon.com ${dHtml(delta(usca_amz,prev_usca_amz))}</div></div>
+    <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="color:var(--eu)">${euuk_amz||'—'}</div><div class="sc-delta">Amazon.eu ${dHtml(delta(euuk_amz,prev_euuk_amz))}</div></div>`;
 
   const sorted = getPeriod(amzPeriod);
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
