@@ -195,21 +195,6 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 }
 .coming-soon p { font-size: 12px; color: var(--muted2); }
 
-/* TOP PRODUCTS */
-.top-products { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.top-product-row {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 10px 14px;
-  transition: border-color 0.15s;
-}
-.top-product-row:hover { border-color: var(--border2); }
-.tp-rank { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 400; color: var(--muted); width: 28px; flex: none; text-align: center; }
-.tp-name { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); }
-.tp-count { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--orange); font-weight: 500; white-space: nowrap; }
-.tp-bar-wrap { width: 80px; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; flex: none; }
-.tp-bar { height: 100%; border-radius: 2px; background: var(--orange); transition: width 0.4s ease; }
-
 /* HISTORY TABLE */
 .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .history-table th { font-size: 10px; font-family: 'Oswald', sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); text-align: left; padding: 8px 10px; border-bottom: 1.5px solid var(--border2); white-space: nowrap; }
@@ -284,8 +269,6 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
     </div>
     <div id="prestaKpis" class="kpi-grid"></div>
     <div id="prestaFunnel"></div>
-    <div class="subsection-title">Produits vedettes</div>
-    <div id="prestaTopProducts" class="top-products"></div>
     <div class="subsection-title" id="prestaChartTitle">Tendances</div>
     <div class="filter-row" id="prestaPeriodRow" style="margin-bottom:12px">
       <span class="filter-label">Période</span>
@@ -298,6 +281,8 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
       <div class="chart-card"><h3>Taux de conversion (CVR %)</h3><div class="chart-wrap"><canvas id="chartCvr"></canvas></div></div>
       <div class="chart-card"><h3>Abandon panier %</h3><div class="chart-wrap"><canvas id="chartAbandon"></canvas></div></div>
     </div>
+    <div class="subsection-title">Best Sellers de la semaine</div>
+    <div id="prestaTopProducts" class="top-products"></div>
   </div>
 
   <!-- S3: AMAZON -->
@@ -310,8 +295,6 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
       <div class="shop-tab" data-amz="EUUK" onclick="selectAmzFilter('EUUK',this)">EU + UK</div>
     </div>
     <div class="stat-grid" id="amazonCards"></div>
-    <div class="subsection-title">Produits vedettes Amazon</div>
-    <div id="amazonTopProducts" class="top-products"></div>
     <div class="subsection-title">Tendance commandes</div>
     <div class="filter-row" id="amzPeriodRow">
       <span class="filter-label">Période</span>
@@ -535,37 +518,6 @@ function switchPage(page, el) {
   if (page==='evolution') renderEvolution();
 }
 
-// ── TOP PRODUCTS HELPER ──
-function getTopProducts(productStr, n=4) {
-  if (!productStr) return [];
-  const counts = {};
-  productStr.split('||').forEach(p => {
-    const name = p.trim();
-    if (!name) return;
-    counts[name] = (counts[name] || 0) + 1;
-  });
-  return Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, n);
-}
-
-function renderTopProducts(containerId, products, color) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  if (!products || products.length === 0) {
-    el.innerHTML = '<div class="loading-bar" style="padding:16px">Aucune donnée produit pour cette semaine.</div>';
-    return;
-  }
-  const max = products[0][1];
-  el.innerHTML = products.map(([name, count], i) => `
-    <div class="top-product-row">
-      <div class="tp-rank">${i+1}</div>
-      <div class="tp-name">${name}</div>
-      <div class="tp-bar-wrap"><div class="tp-bar" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
-      <div class="tp-count">${count} cmd${count>1?'s':''}</div>
-    </div>`).join('');
-}
-
 // ── S1: GLOBAL ──
 function renderGlobal() {
   const entry = getEntry(currentWeek);
@@ -656,7 +608,7 @@ function renderPresta() {
     ];
     document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
     document.getElementById('prestaFunnel').innerHTML='';
-    // Top products global (all shops combined)
+    // Top products global
     const allProds = shops.map(sh => entry.products?.[sh] || '').filter(Boolean).join('||');
     renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917');
   } else {
@@ -747,10 +699,6 @@ function renderAmazon() {
   const prev_ttx = prev_usca_tx+prev_euuk_tx;
   const prev_usca_amz = prev&&prev_ttx>0?Math.round(prevTotal*prev_usca_tx/prev_ttx):Math.round((prevTotal||0)*0.6);
   const prev_euuk_amz = Math.max(0,(prevTotal||0)-prev_usca_amz);
-  // Amazon top products (US + EU combined since amazon orders mix both)
-  const amzAllProds = ['US','EU','CA','UK'].map(sh => entry?.products?.[sh] || '').filter(Boolean).join('||');
-  renderTopProducts('amazonTopProducts', getTopProducts(amzAllProds, 4), '#F15A29');
-
   document.getElementById('amazonCards').innerHTML = `
     <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div></div>
     <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="color:var(--us)">${usca_amz||'—'}</div><div class="sc-delta">Amazon.com ${dHtml(delta(usca_amz,prev_usca_amz))}</div></div>
