@@ -445,14 +445,30 @@ async function loadData() {
     return;
   }
 
-  // 2. Fetch all weekly files in parallel
-  const fetches = weeks.map(w =>
-    fetch(`data/wellputt-data-${w}.json?t=`+Date.now())
-      .then(r => r.ok ? r.json() : null)
-      .catch(() => null)
-  );
-  const results = await Promise.all(fetches);
-  results.forEach(e => { if (e) mergeEntry(e); });
+  // 2. Filter only plausible past weeks (avoid fetching 1300 files)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const jan4 = new Date(currentYear, 0, 4);
+  const currentWeekNum = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  const pastWeeks = weeks.filter(w => {
+    const [y, wn] = w.split('-W');
+    const yr = parseInt(y), wk = parseInt(wn);
+    if (yr < currentYear) return true;
+    if (yr === currentYear && wk <= currentWeekNum + 1) return true;
+    return false;
+  });
+
+  // 3. Fetch in small batches to avoid 429
+  const batchSize = 5;
+  for (let i = 0; i < pastWeeks.length; i += batchSize) {
+    const batch = pastWeeks.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(w =>
+      fetch(`data/wellputt-data-${w}.json?t=`+Date.now())
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    ));
+    results.forEach(e => { if (e) mergeEntry(e); });
+  }
 }
 
 function mergeEntry(entry) {
@@ -516,6 +532,37 @@ function switchPage(page, el) {
   document.getElementById('page-'+page).classList.add('active');
   el.classList.add('active');
   if (page==='evolution') renderEvolution();
+}
+
+// ── TOP PRODUCTS ──
+function getTopProducts(productStr, n=4) {
+  if (!productStr) return [];
+  const counts = {};
+  productStr.split('||').forEach(p => {
+    const name = p.trim();
+    if (!name) return;
+    counts[name] = (counts[name] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n);
+}
+
+function renderTopProducts(containerId, products, color) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!products || products.length === 0) {
+    el.innerHTML = '<div style="padding:16px;color:var(--muted2);font-size:12px">Aucune donnée produit pour cette semaine.</div>';
+    return;
+  }
+  const max = products[0][1];
+  el.innerHTML = products.map(([name, count], i) => `
+    <div class="top-product-row">
+      <div class="tp-rank">${i+1}</div>
+      <div class="tp-name">${name}</div>
+      <div class="tp-bar-wrap"><div class="tp-bar" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
+      <div class="tp-count">${count} cmd${count>1?'s':''}</div>
+    </div>`).join('');
 }
 
 // ── S1: GLOBAL ──
