@@ -333,6 +333,7 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 
   <div class="section">
     <div class="section-title" id="evoTitle">Évolution</div>
+    <div class="stat-grid" id="evoGlobalCards" style="margin-bottom:20px"></div>
     <div class="filter-row">
       <span class="filter-label">Période</span>
       <div class="period-btn active" onclick="setEvoPeriod(4,this)">4 sem</div>
@@ -368,6 +369,14 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 
   <div class="section">
     <div class="section-title">Historique</div>
+    <div class="filter-row" style="margin-bottom:12px">
+      <span class="filter-label">Afficher</span>
+      <div class="period-btn active" onclick="setHistPeriod(2,this)">2 sem</div>
+      <div class="period-btn" onclick="setHistPeriod(4,this)">4 sem</div>
+      <div class="period-btn" onclick="setHistPeriod(8,this)">8 sem</div>
+      <div class="period-btn" onclick="setHistPeriod(13,this)">13 sem</div>
+      <div class="period-btn" onclick="setHistPeriod(0,this)">Tout</div>
+    </div>
     <div style="overflow-x:auto">
       <table class="history-table">
         <thead><tr>
@@ -393,6 +402,7 @@ let currentEvoShop = 'ALL';
 let evoPeriod = 8;
 let amzPeriod = 4;
 let prestaChartPeriod = 4;
+let histPeriod = 2;
 let currentYear = 'all';
 const shops = ['US','EU','CA','UK'];
 const shopColors = {US:'#F15A29',EU:'#4a9eff',CA:'#2ecc8a',UK:'#a78bfa'};
@@ -716,7 +726,7 @@ function renderPresta() {
   }
 
   // Charts
-  const sorted = getPeriod(evoPeriod);
+  const sorted = getPeriod(prestaChartPeriod);
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   if (isAll) {
     const cvrD = sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
@@ -791,6 +801,41 @@ function renderAmazon() {
 }
 
 // ── EVOLUTION ──
+function renderEvoGlobalCards(sorted) {
+  const el = document.getElementById('evoGlobalCards');
+  if (!el || !sorted.length) return;
+  const tot = (f, h) => shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.[f])||0), 0);
+  const totalTx = sorted.reduce((s,h)=>s+tot('transactions',h), 0);
+  const totalRev = sorted.reduce((s,h)=>s+tot('revenue',h), 0);
+  const totalSess = sorted.reduce((s,h)=>s+tot('sessions',h), 0);
+  const totalCC = sorted.reduce((s,h)=>s+tot('carts_created',h), 0);
+  const totalCA = sorted.reduce((s,h)=>s+tot('carts_abandoned',h), 0);
+  const totalAmz = sorted.reduce((s,h)=>s+(h.amazon?.orders||0), 0);
+  const globalCvr = totalSess>0 ? (totalTx/totalSess*100).toFixed(2) : '0';
+  const globalAbandon = totalCC>0 ? (totalCA/totalCC*100).toFixed(1) : '0';
+  const shopCards = shops.map(sh => {
+    const rev = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.revenue)||0), 0);
+    const tx = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0), 0);
+    return `<div class="stat-card">
+      <div class="sc-label" style="color:${shopColors[sh]};font-weight:700">${sh}</div>
+      <div class="sc-value" style="font-size:22px">${fmtCur(rev,sh)}</div>
+      <div class="sc-delta">${tx} cmd${tx>1?'s':''}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div class="sc-delta">sur la période</div></div>
+      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div class="sc-delta">sur la période</div></div>
+      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div class="sc-delta">moy. période</div></div>
+      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div class="sc-delta">sur la période</div></div>
+      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${totalAmz||'—'}</div><div class="sc-delta">sur la période</div></div>
+    </div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      ${shopCards}
+      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div class="sc-delta">moy. période</div></div>
+    </div>`;
+}
+
 function setEvoPeriod(n, el) {
   evoPeriod = n;
   document.querySelectorAll('#page-evolution .period-btn').forEach(b=>b.classList.remove('active'));
@@ -806,7 +851,7 @@ function selectEvoShop(shop, el) {
 function renderEvolution() {
   const sorted = getPeriod(evoPeriod);
   const n = sorted.length;
-  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n>1?'s':''}`;
+  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n>1?'s':''}`;  renderEvoGlobalCards(sorted);
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   const shopsShow = currentEvoShop==='ALL' ? shops : [currentEvoShop];
 
@@ -825,12 +870,25 @@ function renderEvolution() {
   mkChart('evoAtcRate','line',labels,ds('atcRate'));
   mkChart('evoAmazon','bar',labels,[{label:'Amazon',data:sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4}]);
 
-  renderHistory(sorted);
+  renderHistory();
 }
-function renderHistory(sorted) {
+function setHistPeriod(n, el) {
+  histPeriod = n;
+  document.querySelectorAll('#page-evolution .section:last-child .filter-row .period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
   const week = currentWeek;
   let rows = '';
-  [...sorted].reverse().forEach(entry=>{
+  let allSorted = [...history].sort((a,b)=>a.week<b.week?-1:1);
+  if (histPeriod > 0) {
+    const uniqueWeeks = [...new Set(allSorted.map(h=>h.week))];
+    const lastN = uniqueWeeks.slice(-histPeriod);
+    allSorted = allSorted.filter(h=>lastN.includes(h.week));
+  }
+  [...allSorted].reverse().forEach(entry=>{
     const isCur = entry.week===week;
     shops.forEach(sh=>{
       const d=entry.shops?.[sh]; if(!d) return;
