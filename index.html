@@ -564,8 +564,15 @@ function getTopProducts(productStr, n=4) {
   if (!productStr) return [];
   const counts = {};
   productStr.split('||').forEach(p => {
-    const name = p.trim();
+    // Normalize name: convert "- Color: X" → "(Color: X)", trim variants in parens
+    let name = p.trim();
     if (!name) return;
+    // Unify dash vs parens format: "13ft Performance - Color: Green" → "13ft Performance (Color: Green)"
+    name = name.replace(/\s*-\s*(Color|Colour|Couleur|Farbe|Colore|Färg|Color|Arc|Version)\s*:/gi, ' ($1:');
+    // Close paren if opened by replacement and not already closed
+    if ((name.match(/\(/g)||[]).length > (name.match(/\)/g)||[]).length) name += ')';
+    // Normalize whitespace
+    name = name.replace(/\s+/g, ' ').trim();
     counts[name] = (counts[name] || 0) + 1;
   });
   return Object.entries(counts)
