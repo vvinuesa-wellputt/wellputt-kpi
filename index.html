@@ -218,6 +218,67 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 .history-table .week-current td { color: var(--text); font-weight: 500; background: rgba(241,90,41,0.03); }
 .shop-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
+/* ALERT BADGES */
+.kpi-card.alert { border-left-color: var(--red) !important; background: rgba(192,57,43,0.04); }
+.kpi-card.alert .kpi-val { color: var(--red); }
+.stat-card.alert { border-color: rgba(192,57,43,0.3); background: rgba(192,57,43,0.03); }
+.alert-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(192,57,43,0.1); color: var(--red);
+  border-radius: 4px; padding: 2px 7px; font-size: 9px;
+  font-family: 'Oswald', sans-serif; letter-spacing: 0.08em;
+  text-transform: uppercase; font-weight: 600; margin-left: 6px;
+}
+
+/* BEST SELLERS SHOP BREAKDOWN */
+.bs-shop-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.bs-shop-pill {
+  font-size: 9px; font-family: 'DM Mono', monospace;
+  background: var(--bg3); border-radius: 3px; padding: 2px 6px;
+  color: var(--muted2);
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(237,233,227,0.85);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; gap: 16px; backdrop-filter: blur(4px);
+}
+.loading-overlay.hidden { display: none; }
+.loading-spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border2);
+  border-top-color: var(--orange); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.loading-overlay p { font-size: 13px; color: var(--muted2); font-family: 'DM Mono', monospace; }
+
+/* EXPORT BTN */
+.btn-export {
+  background: var(--bg2); color: var(--text); border: 1px solid var(--border2);
+  font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 6px; cursor: pointer;
+  transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-export:hover { border-color: var(--text); background: var(--bg3); }
+
+/* TOP PRODUCTS SHOP TOGGLE */
+.bs-filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+
+/* COMPARE BADGE */
+.compare-unavailable {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px dashed var(--border2);
+  border-radius: 6px; padding: 8px 14px; font-size: 11px; color: var(--muted2);
+  font-style: italic; margin-bottom: 12px;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .stat-grid > div[style*="grid-template-columns:repeat(5"] { grid-template-columns: repeat(2,1fr) !important; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+}
+
 /* LOADING */
 .loading-bar { text-align: center; padding: 40px; color: var(--muted2); font-size: 13px; }
 
@@ -232,6 +293,10 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
 <body>
 
 <!-- HEADER -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <p id="loadingMsg">Chargement des données...</p>
+</div>
 <div class="header">
   <div class="logo">WELL<span>PUTT</span> KPI</div>
   <div class="header-right">
@@ -296,7 +361,16 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
       <div class="chart-card"><h3>Taux de conversion (CVR %)</h3><div class="chart-wrap"><canvas id="chartCvr"></canvas></div></div>
       <div class="chart-card"><h3>Abandon panier %</h3><div class="chart-wrap"><canvas id="chartAbandon"></canvas></div></div>
     </div>
-    <div class="subsection-title">Best Sellers de la semaine</div>
+    <div class="subsection-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Best Sellers</span>
+      <div class="bs-filter-row" style="margin-bottom:0">
+        <span class="filter-label">Période</span>
+        <div class="period-btn active" onclick="setBsPeriod(0,this)">Semaine</div>
+        <div class="period-btn" onclick="setBsPeriod(4,this)">4 sem</div>
+        <div class="period-btn" onclick="setBsPeriod(8,this)">8 sem</div>
+        <div class="period-btn" onclick="setBsPeriod(13,this)">13 sem</div>
+      </div>
+    </div>
     <div id="prestaTopProducts" class="top-products"></div>
   </div>
 
@@ -365,10 +439,20 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
       <div class="chart-card"><h3>Amazon — commandes totales</h3><div class="chart-wrap tall"><canvas id="evoAmazon"></canvas></div></div>
       <div class="chart-card"><h3>ATC Rate %</h3><div class="chart-wrap tall"><canvas id="evoAtcRate"></canvas></div></div>
     </div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>CA Amazon estimé (orders × AOV US)</h3><div class="chart-wrap tall"><canvas id="evoAmazonCA"></canvas></div></div>
+      <div class="chart-card">
+        <h3>Comparaison périodes</h3>
+        <div class="compare-unavailable">⏳ Disponible dès que des données multi-années seront présentes (2027+)</div>
+      </div>
+    </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Historique</div>
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span>Historique</span>
+      <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
+    </div>
     <div class="filter-row" style="margin-bottom:12px">
       <span class="filter-label">Afficher</span>
       <div class="period-btn active" onclick="setHistPeriod(2,this)">2 sem</div>
@@ -403,6 +487,7 @@ let evoPeriod = 8;
 let amzPeriod = 4;
 let prestaChartPeriod = 4;
 let histPeriod = 2;
+let bsPeriod = 0; // 0 = current week only
 let currentYear = 'all';
 const shops = ['US','EU','CA','UK'];
 const shopColors = {US:'#F15A29',EU:'#4a9eff',CA:'#2ecc8a',UK:'#a78bfa'};
@@ -424,6 +509,12 @@ function delta(cur, prev) {
   if (!prev || parseFloat(prev)===0) return null;
   return ((parseFloat(cur)-parseFloat(prev))/Math.abs(parseFloat(prev))*100).toFixed(1);
 }
+function isAlert(cur, prev, threshold=20) {
+  if (!prev || parseFloat(prev)===0) return false;
+  const d = ((parseFloat(cur)-parseFloat(prev))/Math.abs(parseFloat(prev))*100);
+  return d < -threshold;
+}
+
 function dHtml(d, inv=false) {
   if (d===null) return '';
   const n = parseFloat(d);
@@ -496,6 +587,17 @@ async function loadData() {
   }
 }
 
+function showLoading(msg) {
+  const o = document.getElementById('loadingOverlay');
+  const m = document.getElementById('loadingMsg');
+  if (o) o.classList.remove('hidden');
+  if (m) m.textContent = msg || 'Chargement...';
+}
+function hideLoading() {
+  const o = document.getElementById('loadingOverlay');
+  if (o) o.classList.add('hidden');
+}
+
 function mergeEntry(entry) {
   if (!entry || !entry.week) return;
   // Recalc missing derived fields
@@ -515,16 +617,17 @@ function mergeEntry(entry) {
 async function refreshData() {
   const btn = document.getElementById('refreshBtn');
   const icon = document.getElementById('refreshIcon');
-  btn.classList.add('loading'); icon.classList.add('spin');
+  btn.classList.add('loading'); icon.classList.add('spin'); showLoading('Actualisation des données...');
   history = []; // Clear and reload fresh
   await loadData();
   history.sort((a,b)=>a.week>b.week?-1:1);
   populateYearFilter();
   renderAll();
   const now = new Date();
+  hideLoading();
   document.getElementById('lastUpdate').textContent =
     'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  btn.classList.remove('loading'); icon.classList.remove('spin');
+  btn.classList.remove('loading'); icon.classList.remove('spin'); hideLoading();
 }
 
 // ── YEAR / WEEK ──
@@ -560,6 +663,66 @@ function switchPage(page, el) {
 }
 
 // ── TOP PRODUCTS ──
+function setBsPeriod(n, el) {
+  bsPeriod = n;
+  document.querySelectorAll('#prestaPeriodRow').forEach(r=>{});
+  // Update buttons in bs filter row
+  document.querySelectorAll('.bs-filter-row .period-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderPresta();
+}
+
+function getTopProductsMulti(entries, shopFilter, n=4) {
+  // Aggregate across multiple entries and shops, with per-shop breakdown
+  const counts = {}; // name → {total, shops: {US:n, EU:n, ...}}
+  entries.forEach(entry => {
+    const shopsToUse = shopFilter==='ALL' ? shops : [shopFilter];
+    shopsToUse.forEach(sh => {
+      const str = entry.products?.[sh] || '';
+      if (!str) return;
+      str.split('||').forEach(p => {
+        let name = p.trim();
+        if (!name) return;
+        name = name.replace(/\s*-\s*(Color|Colour|Couleur|Farbe|Colore|Färg|Arc|Version)\s*:/gi, ' ($1:');
+        if ((name.match(/\(/g)||[]).length > (name.match(/\)/g)||[]).length) name += ')';
+        name = name.replace(/\s+/g, ' ').trim();
+        if (!counts[name]) counts[name] = {total:0, shops:{}};
+        counts[name].total++;
+        counts[name].shops[sh] = (counts[name].shops[sh]||0)+1;
+      });
+    });
+  });
+  return Object.entries(counts)
+    .sort((a,b) => b[1].total - a[1].total)
+    .slice(0, n)
+    .map(([name, data]) => [name, data.total, data.shops]);
+}
+
+function renderTopProductsMulti(containerId, products, color) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!products || products.length === 0) {
+    el.innerHTML = '<div style="padding:16px;color:var(--muted2);font-size:12px">Aucune donnée produit.</div>';
+    return;
+  }
+  const max = products[0][1];
+  el.innerHTML = products.map(([name, count, shopBreak], i) => {
+    const shopPills = Object.entries(shopBreak||{})
+      .sort((a,b)=>b[1]-a[1])
+      .map(([sh,n])=>`<span class="bs-shop-pill" style="color:${shopColors[sh]}">${sh} ${n}</span>`)
+      .join('');
+    return `<div class="top-product-row">
+      <div class="tp-rank">${i+1}</div>
+      <div class="tp-name">
+        ${name}
+        <div class="bs-shop-row">${shopPills}</div>
+      </div>
+      <div class="tp-bar-wrap"><div class="tp-bar" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
+      <div class="tp-count">${count} cmd${count>1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
 function getTopProducts(productStr, n=4) {
   if (!productStr) return [];
   const counts = {};
@@ -637,7 +800,7 @@ function renderGlobal() {
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
       <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,totP('transactions')))}</div></div>
       <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div>${dHtml(delta(totalRev,totP('revenue')))}</div></div>
-      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div></div>
+      <div class="stat-card ${isAlert(globalCvr,prevCvr)?'alert':''}"><div class="sc-label">CVR Global ${isAlert(globalCvr,prevCvr)?'<span class="alert-badge">⚠ chute</span>':''}</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div></div>
       <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${dHtml(delta(totalSess,totP('sessions')))}</div></div>
       <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${amz||'—'}</div><div>${dHtml(delta(amz,prevAmz))}</div></div>
     </div>
@@ -688,8 +851,13 @@ function renderPresta() {
     document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
     document.getElementById('prestaFunnel').innerHTML='';
     // Top products global
-    const allProds = shops.map(sh => entry.products?.[sh] || '').filter(Boolean).join('||');
-    renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917');
+    if (bsPeriod === 0) {
+      const allProds = shops.map(sh => entry.products?.[sh] || '').filter(Boolean).join('||');
+      renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917');
+    } else {
+      const bsEntries = getPeriod(bsPeriod);
+      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, 'ALL', 4), '#1a1917');
+    }
   } else {
     const d = entry.shops?.[sh]; if (!d) { document.getElementById('prestaKpis').innerHTML=''; document.getElementById('prestaFunnel').innerHTML=''; return; }
     const p = prev?.shops?.[sh];
@@ -717,8 +885,13 @@ function renderPresta() {
       {label:'Paniers abandonnés', val:ca, pct:funnelMax>0?ca/funnelMax*100:0},
       {label:'Commandes', val:tx, pct:funnelMax>0?tx/funnelMax*100:0},
     ];
-    const shopProds = entry.products?.[sh] || '';
-    renderTopProducts('prestaTopProducts', getTopProducts(shopProds, 4), shopColors[sh]);
+    if (bsPeriod === 0) {
+      const shopProds = entry.products?.[sh] || '';
+      renderTopProducts('prestaTopProducts', getTopProducts(shopProds, 4), shopColors[sh]);
+    } else {
+      const bsEntries = getPeriod(bsPeriod);
+      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, sh, 4), shopColors[sh]);
+    }
     document.getElementById('prestaFunnel').innerHTML = `
       <div class="funnel-card">
         <div class="funnel-title">Funnel de conversion</div>
@@ -778,8 +951,15 @@ function renderAmazon() {
   const prev_ttx = prev_usca_tx+prev_euuk_tx;
   const prev_usca_amz = prev&&prev_ttx>0?Math.round(prevTotal*prev_usca_tx/prev_ttx):Math.round((prevTotal||0)*0.6);
   const prev_euuk_amz = Math.max(0,(prevTotal||0)-prev_usca_amz);
+  // Estimate Amazon CA = amazon orders × avg AOV across shops
+  const avgAOV = shops.reduce((s,sh)=>s+(parseFloat(entry?.shops?.[sh]?.aov)||0),0) / shops.filter(sh=>parseFloat(entry?.shops?.[sh]?.aov)>0).length || 0;
+  const amzCA = Math.round(total * avgAOV);
+  const prevAvgAOV = prev ? shops.reduce((s,sh)=>s+(parseFloat(prev?.shops?.[sh]?.aov)||0),0) / shops.filter(sh=>parseFloat(prev?.shops?.[sh]?.aov)>0).length : 0;
+  const prevAmzCA = Math.round(prevTotal * (prevAvgAOV||avgAOV));
+
   document.getElementById('amazonCards').innerHTML = `
     <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div></div>
+    <div class="stat-card"><div class="sc-label">CA Amazon <span style="font-size:9px;color:var(--muted);font-weight:400">est.</span></div><div class="sc-value">${amzCA?'€'+Math.round(amzCA).toLocaleString('fr-FR'):'—'}</div><div class="sc-delta">${dHtml(delta(amzCA,prevAmzCA))}</div></div>
     <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="color:var(--us)">${usca_amz||'—'}</div><div class="sc-delta">Amazon.com ${dHtml(delta(usca_amz,prev_usca_amz))}</div></div>
     <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="color:var(--eu)">${euuk_amz||'—'}</div><div class="sc-delta">Amazon.eu ${dHtml(delta(euuk_amz,prev_euuk_amz))}</div></div>`;
 
@@ -876,6 +1056,14 @@ function renderEvolution() {
   mkChart('evoAbandon','line',labels,ds('abandon'));
   mkChart('evoAtcRate','line',labels,ds('atcRate'));
   mkChart('evoAmazon','bar',labels,[{label:'Amazon',data:sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4}]);
+  // Amazon CA estimated
+  const amzCAData = sorted.map(h => {
+    const orders = h.amazon?.orders || 0;
+    const aovVals = shops.map(sh=>parseFloat(h.shops?.[sh]?.aov)||0).filter(v=>v>0);
+    const avgAov = aovVals.length ? aovVals.reduce((s,v)=>s+v,0)/aovVals.length : 0;
+    return Math.round(orders * avgAov);
+  });
+  mkChart('evoAmazonCA','line',labels,[{label:'CA Amazon est.',data:amzCAData,borderColor:'#F15A29',backgroundColor:'#F15A2922',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
 
   renderHistory();
 }
@@ -942,6 +1130,30 @@ function renderDashboard() {
   renderPresta();
   renderAmazon();
 }
+function exportCSV() {
+  const headers = ['Semaine','Shop','Sessions','Commandes','CA','CVR%','AOV','Paniers créés','Abandonnés','Abandon%','ATC Rate%'];
+  const rows = [headers.join(',')];
+  const allSorted = [...history].sort((a,b)=>a.week>b.week?-1:1);
+  allSorted.forEach(entry => {
+    shops.forEach(sh => {
+      const d = entry.shops?.[sh]; if (!d) return;
+      rows.push([
+        entry.week, sh,
+        d.sessions||0, d.transactions||0,
+        parseFloat(d.revenue||0).toFixed(2),
+        d.cvr||0, d.aov||0,
+        d.carts_created||0, d.carts_abandoned||0,
+        d.abandon||0, d.atcRate||0
+      ].join(','));
+    });
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'wellputt-kpi.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function renderAll() {
   renderDashboard();
   // Re-render evo if active
@@ -950,13 +1162,14 @@ function renderAll() {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('lastUpdate').textContent = 'Chargement des données...';
+  showLoading('Chargement des données...');
   await loadData();
   history.sort((a,b)=>a.week>b.week?-1:1);
   populateYearFilter();
   initWeekPicker();
   renderAll();
   const now = new Date();
+  hideLoading();
   document.getElementById('lastUpdate').textContent =
     'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 });
