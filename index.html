@@ -301,8 +301,7 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
   <div class="logo">WELL<span>PUTT</span> KPI</div>
   <div class="header-right">
     <div class="last-update-wrap">
-      <span class="last-update" id="lastUpdate">Chargement...</span>
-      <span class="refresh-hint">↻ Cliquez sur Refresh pour avoir les dernières données</span>
+      <span class="refresh-hint" style="font-size:11px">↻ Cliquez sur Refresh pour avoir les dernières données</span>
     </div>
     <div class="header-filter">
       <span class="header-label">Semaine</span>
@@ -362,7 +361,7 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
       <div class="chart-card"><h3>Abandon panier %</h3><div class="chart-wrap"><canvas id="chartAbandon"></canvas></div></div>
     </div>
     <div class="subsection-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>Best Sellers</span>
+      <span>Best Sellers Prestashop + Amazon</span>
       <div class="bs-filter-row" style="margin-bottom:0">
         <span class="filter-label">Période</span>
         <div class="period-btn active" onclick="setBsPeriod(0,this)">Semaine</div>
@@ -623,10 +622,6 @@ async function refreshData() {
   history.sort((a,b)=>a.week>b.week?-1:1);
   populateYearFilter();
   renderAll();
-  const now = new Date();
-  hideLoading();
-  document.getElementById('lastUpdate').textContent =
-    'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   btn.classList.remove('loading'); icon.classList.remove('spin'); hideLoading();
 }
 
@@ -991,7 +986,8 @@ function renderAmazon() {
 function renderEvoGlobalCards(sorted) {
   const el = document.getElementById('evoGlobalCards');
   if (!el || !sorted.length) return;
-  const tot = (f, h) => shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.[f])||0), 0);
+  const shopsFilter = currentEvoShop==='ALL' ? shops : [currentEvoShop];
+  const tot = (f, h) => shopsFilter.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.[f])||0), 0);
   const totalTx = sorted.reduce((s,h)=>s+tot('transactions',h), 0);
   const totalRev = sorted.reduce((s,h)=>s+tot('revenue',h), 0);
   const totalSess = sorted.reduce((s,h)=>s+tot('sessions',h), 0);
@@ -1000,7 +996,7 @@ function renderEvoGlobalCards(sorted) {
   const totalAmz = sorted.reduce((s,h)=>s+(h.amazon?.orders||0), 0);
   const globalCvr = totalSess>0 ? (totalTx/totalSess*100).toFixed(2) : '0';
   const globalAbandon = totalCC>0 ? (totalCA/totalCC*100).toFixed(1) : '0';
-  const shopCards = shops.map(sh => {
+  const shopCards = shopsFilter.map(sh => {
     const rev = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.revenue)||0), 0);
     const tx = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0), 0);
     return `<div class="stat-card">
@@ -1168,10 +1164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateYearFilter();
   initWeekPicker();
   renderAll();
-  const now = new Date();
   hideLoading();
-  document.getElementById('lastUpdate').textContent =
-    'Mis à jour le ' + now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 });
 </script>
 </body>
