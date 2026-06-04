@@ -1,0 +1,62 @@
+{
+  "week": "2025-W46",
+  "shops": {
+    "US": {
+      "transactions": "64",
+      "revenue": "9260.0",
+      "sessions": "4142",
+      "aov": "145",
+      "cvr": "1.55",
+      "add_to_cart": "243",
+      "atcRate": "5.9",
+      "carts_created": "240",
+      "carts_abandoned": "176",
+      "abandon": "73.3"
+    },
+    "EU": {
+      "transactions": "24",
+      "revenue": "3372.36",
+      "sessions": "3414",
+      "aov": "141",
+      "cvr": "0.7",
+      "add_to_cart": "128",
+      "atcRate": "3.7",
+      "carts_created": "113",
+      "carts_abandoned": "89",
+      "abandon": "78.8"
+    },
+    "CA": {
+      "transactions": "0",
+      "revenue": "0",
+      "sessions": "371",
+      "aov": "0",
+      "cvr": "0.0",
+      "add_to_cart": "0",
+      "atcRate": "0.0",
+      "carts_created": "0",
+      "carts_abandoned": "0",
+      "abandon": "0"
+    },
+    "UK": {
+      "transactions": "13",
+      "revenue": "1631.75",
+      "sessions": "3428",
+      "aov": "126",
+      "cvr": "0.38",
+      "add_to_cart": "128",
+      "atcRate": "3.7",
+      "carts_created": "94",
+      "carts_abandoned": "81",
+      "abandon": "86.2"
+    }
+  },
+  "amazon": {
+    "orders": 203
+  },
+  "products": {
+    "US": "",
+    "EU": "",
+    "CA": "",
+    "UK": ""
+  }
+}
