@@ -273,7 +273,27 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
   font-style: italic; margin-bottom: 12px;
 }
 
-/* MOBILE */
+/* N-1 TOGGLE */
+.btn-n1 {
+  background: var(--bg2); color: var(--muted2);
+  border: 1.5px solid var(--border2);
+  font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 6px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-n1:hover { border-color: var(--text); color: var(--text); }
+.btn-n1.active { background: var(--text); color: white; border-color: var(--text); }
+.btn-n1.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+/* N-1 VALUES IN CARDS */
+.n1-val { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.n1-val span { color: var(--muted2); }
+.kpi-n1 { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+/* N-1 BEST SELLERS */
+.tp-n1 { font-size: 10px; color: var(--muted2); font-family: 'DM Mono', monospace; white-space: nowrap; }
+
 @media (max-width: 600px) {
   .stat-grid > div[style*="grid-template-columns:repeat(5"] { grid-template-columns: repeat(2,1fr) !important; }
   .kpi-grid { grid-template-columns: repeat(2,1fr); }
@@ -313,6 +333,7 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
         <option value="all">Toutes</option>
       </select>
     </div>
+    <button class="btn-n1" id="btnN1" onclick="toggleN1()">N-1</button>
     <button class="btn-refresh" onclick="refreshData()" id="refreshBtn">
       <span id="refreshIcon">↻</span> Refresh
     </button>
@@ -441,8 +462,8 @@ body { background: var(--bg3); color: var(--text); font-family: 'DM Sans', sans-
     <div class="chart-row">
       <div class="chart-card"><h3>CA Amazon estimé (orders × AOV US)</h3><div class="chart-wrap tall"><canvas id="evoAmazonCA"></canvas></div></div>
       <div class="chart-card">
-        <h3>Comparaison périodes</h3>
-        <div class="compare-unavailable">⏳ Disponible dès que des données multi-années seront présentes (2027+)</div>
+        <h3>Comparaison N-1</h3>
+        <div id="evoN1Summary" style="padding:8px 0"></div>
       </div>
     </div>
   </div>
@@ -486,11 +507,94 @@ let evoPeriod = 8;
 let amzPeriod = 4;
 let prestaChartPeriod = 4;
 let histPeriod = 2;
-let bsPeriod = 0; // 0 = current week only
+let bsPeriod = 0;
 let currentYear = 'all';
+let showN1 = false;
 const shops = ['US','EU','CA','UK'];
 const shopColors = {US:'#F15A29',EU:'#4a9eff',CA:'#2ecc8a',UK:'#a78bfa'};
 const charts = {};
+
+// ── N-1 HELPERS ──
+function getN1Week(week) {
+  if (!week) return null;
+  const [y, w] = week.split('-W');
+  return `${parseInt(y)-1}-W${w}`;
+}
+function getN1Entry(week) { return getEntry(getN1Week(week)); }
+function getN1Period(sorted) {
+  // Returns the N-1 equivalent of a sorted array of entries
+  return sorted.map(h => getEntry(getN1Week(h.week))).filter(Boolean);
+}
+function hasN1Data() {
+  // Check if any N-1 data exists for current context
+  if (currentWeek) return !!getN1Entry(currentWeek);
+  const sorted = getPeriod(evoPeriod);
+  return sorted.some(h => !!getEntry(getN1Week(h.week)));
+}
+function toggleN1() {
+  if (!hasN1Data()) return;
+  showN1 = !showN1;
+  const btn = document.getElementById('btnN1');
+  btn.classList.toggle('active', showN1);
+  renderAll();
+}
+function updateN1Button() {
+  const btn = document.getElementById('btnN1');
+  if (!btn) return;
+  const has = hasN1Data();
+  btn.classList.toggle('disabled', !has);
+  btn.title = has ? 'Comparer avec N-1' : 'Pas de données N-1 disponibles';
+}
+function n1CardHtml(val, n1val, label, inv=false) {
+  if (!showN1 || n1val === null || n1val === undefined) return '';
+  const d = delta(val, n1val);
+  return `<div class="n1-val">N-1: <span>${label}</span> ${d !== null ? dHtml(d, inv) : ''}</div>`;
+}
+function n1KpiHtml(val, n1val, inv=false) {
+  if (!showN1 || n1val === null || n1val === undefined) return '';
+  const d = delta(val, n1val);
+  return `<div class="kpi-n1">N-1: ${n1val} ${d !== null ? dHtml(d, inv) : ''}</div>`;
+}
+function n1Dataset(sorted, field, color, isShop=false, sh=null) {
+  if (!showN1) return [];
+  const n1sorted = getN1Period(sorted);
+  if (!n1sorted.length) return [];
+  const data = n1sorted.map(h => {
+    if (isShop && sh) { const v=parseFloat(h.shops?.[sh]?.[field]); return isNaN(v)?null:v; }
+    return parseFloat(h.shops ? shops.reduce((s,shop)=>{ const v=parseFloat(h.shops[shop]?.[field])||0; return s+v; },0) : 0) || null;
+  });
+  return [{
+    label: `N-1 ${field}`, data,
+    borderColor: color, backgroundColor: color+'22',
+    borderDash: [4,3], tension: 0.3, fill: false,
+    borderWidth: 1.5, pointRadius: 2, pointStyle: 'circle',
+    borderDashOffset: 0
+  }];
+}
+function n1DatasetMulti(sorted, shopsShow, field) {
+  if (!showN1) return [];
+  const n1sorted = getN1Period(sorted);
+  if (!n1sorted.length) return [];
+  return shopsShow.map(sh => ({
+    label: `N-1 ${sh}`,
+    data: n1sorted.map(h => { const v=parseFloat(h.shops?.[sh]?.[field]); return isNaN(v)?null:v; }),
+    borderColor: shopColors[sh], backgroundColor: shopColors[sh]+'22',
+    borderDash: [4,3], tension: 0.3, fill: false,
+    borderWidth: 1.5, pointRadius: 2
+  }));
+}
+function n1AmazonDataset(sorted, color) {
+  if (!showN1) return [];
+  const n1sorted = getN1Period(sorted);
+  if (!n1sorted.length) return [];
+  return [{
+    label: 'N-1 Amazon',
+    data: n1sorted.map(h=>h.amazon?.orders||0),
+    backgroundColor: color+'44', borderColor: color,
+    borderWidth: 1, borderRadius: 4,
+    borderDash: [4,3]
+  }];
+}
 
 // ── UTILS ──
 function fmt(v, dec=0) {
@@ -693,7 +797,7 @@ function getTopProductsMulti(entries, shopFilter, n=4) {
     .map(([name, data]) => [name, data.total, data.shops]);
 }
 
-function renderTopProductsMulti(containerId, products, color) {
+function renderTopProductsMulti(containerId, products, color, n1products=null) {
   const el = document.getElementById(containerId);
   if (!el) return;
   if (!products || products.length === 0) {
@@ -701,16 +805,22 @@ function renderTopProductsMulti(containerId, products, color) {
     return;
   }
   const max = products[0][1];
+  const n1Map = n1products ? Object.fromEntries(n1products.map(([n,c])=>[n,c])) : {};
   el.innerHTML = products.map(([name, count, shopBreak], i) => {
     const shopPills = Object.entries(shopBreak||{})
       .sort((a,b)=>b[1]-a[1])
       .map(([sh,n])=>`<span class="bs-shop-pill" style="color:${shopColors[sh]}">${sh} ${n}</span>`)
       .join('');
+    const n1count = n1Map[name];
+    const n1html = showN1 && n1count !== undefined
+      ? `<div class="tp-n1">N-1: ${n1count} ${dHtml(delta(count,n1count))}</div>`
+      : '';
     return `<div class="top-product-row">
       <div class="tp-rank">${i+1}</div>
       <div class="tp-name">
         ${name}
         <div class="bs-shop-row">${shopPills}</div>
+        ${n1html}
       </div>
       <div class="tp-bar-wrap"><div class="tp-bar" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
       <div class="tp-count">${count} cmd${count>1?'s':''}</div>
@@ -738,7 +848,7 @@ function getTopProducts(productStr, n=4) {
     .slice(0, n);
 }
 
-function renderTopProducts(containerId, products, color) {
+function renderTopProducts(containerId, products, color, n1products=null) {
   const el = document.getElementById(containerId);
   if (!el) return;
   if (!products || products.length === 0) {
@@ -746,62 +856,74 @@ function renderTopProducts(containerId, products, color) {
     return;
   }
   const max = products[0][1];
-  el.innerHTML = products.map(([name, count], i) => `
-    <div class="top-product-row">
+  const n1Map = n1products ? Object.fromEntries(n1products.map(([n,c])=>[n,c])) : {};
+  el.innerHTML = products.map(([name, count], i) => {
+    const n1count = n1Map[name];
+    const n1html = showN1 && n1count !== undefined
+      ? `<div class="tp-n1">N-1: ${n1count} ${dHtml(delta(count,n1count))}</div>`
+      : '';
+    return `<div class="top-product-row">
       <div class="tp-rank">${i+1}</div>
-      <div class="tp-name">${name}</div>
+      <div class="tp-name">${name}${n1html}</div>
       <div class="tp-bar-wrap"><div class="tp-bar" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
       <div class="tp-count">${count} cmd${count>1?'s':''}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── S1: GLOBAL ──
 function renderGlobal() {
   const entry = getEntry(currentWeek);
   const prev = getPrev(currentWeek);
+  const n1 = showN1 ? getN1Entry(currentWeek) : null;
   document.getElementById('globalWeekLabel').textContent = currentWeek||'';
   if(document.getElementById('prestaWeekLabel')) document.getElementById('prestaWeekLabel').textContent = currentWeek||'';
   if(document.getElementById('amazonWeekLabel')) document.getElementById('amazonWeekLabel').textContent = currentWeek||'';
+  updateN1Button();
   if (!entry) { document.getElementById('globalCards').innerHTML='<div class="loading-bar">Aucune donnée pour cette semaine.</div>'; return; }
 
-  const tot = f => shops.reduce((s,sh)=>s+(parseFloat(entry.shops?.[sh]?.[f])||0),0);
-  const totP = f => prev ? shops.reduce((s,sh)=>s+(parseFloat(prev.shops?.[sh]?.[f])||0),0) : 0;
-  const totalTx=tot('transactions'), totalRev=tot('revenue'), totalSess=tot('sessions'), totalCarts=tot('carts_created');
+  const tot = (e, f) => shops.reduce((s,sh)=>s+(parseFloat(e?.shops?.[sh]?.[f])||0),0);
+  const totalTx=tot(entry,'transactions'), totalRev=tot(entry,'revenue'), totalSess=tot(entry,'sessions');
   const globalCvr = totalSess>0 ? (totalTx/totalSess*100).toFixed(2) : '0';
-  const prevCvr = totP('sessions')>0 ? (totP('transactions')/totP('sessions')*100).toFixed(2) : '0';
+  const prevCvr = tot(prev,'sessions')>0 ? (tot(prev,'transactions')/tot(prev,'sessions')*100).toFixed(2) : '0';
   const amz = entry.amazon?.orders||0;
   const prevAmz = prev?.amazon?.orders||0;
+  const totalCC = tot(entry,'carts_created'), totalCA = tot(entry,'carts_abandoned');
+  const prevCC = tot(prev,'carts_created'), prevCA = tot(prev,'carts_abandoned');
+  const globalAbandon = totalCC>0?(totalCA/totalCC*100).toFixed(1):'0';
+  const prevAbandon = prevCC>0?(prevCA/prevCC*100).toFixed(1):'0';
+
+  // N-1
+  const n1Tx=tot(n1,'transactions'), n1Rev=tot(n1,'revenue'), n1Sess=tot(n1,'sessions');
+  const n1Cvr = n1Sess>0?(n1Tx/n1Sess*100).toFixed(2):'0';
+  const n1Amz = n1?.amazon?.orders||0;
+  const n1CC=tot(n1,'carts_created'), n1CA=tot(n1,'carts_abandoned');
+  const n1Abandon = n1CC>0?(n1CA/n1CC*100).toFixed(1):'0';
 
   const shopCards = shops.map(sh => {
     const d = entry.shops?.[sh]; if (!d) return '';
     const rev=parseFloat(d.revenue)||0, tx=parseFloat(d.transactions)||0;
     const pRev = prev?parseFloat(prev.shops?.[sh]?.revenue)||0:null;
+    const n1Rev = n1?parseFloat(n1.shops?.[sh]?.revenue)||0:null;
     return `<div class="stat-card">
       <div class="sc-label" style="color:${shopColors[sh]};font-weight:700">${sh}</div>
       <div class="sc-value">${fmtCur(rev,sh)}</div>
       <div class="sc-delta">${tx} cmd${tx>1?'s':''} ${pRev!==null?dHtml(delta(rev,pRev)):''}</div>
+      ${n1 && n1Rev!==null ? n1CardHtml(rev, n1Rev, fmtCur(n1Rev,sh)) : ''}
     </div>`;
   }).join('');
 
-  // Global abandon
-  const totalCC = shops.reduce((s,sh)=>s+(parseFloat(entry.shops?.[sh]?.carts_created)||0),0);
-  const totalCA = shops.reduce((s,sh)=>s+(parseFloat(entry.shops?.[sh]?.carts_abandoned)||0),0);
-  const prevCC = prev?shops.reduce((s,sh)=>s+(parseFloat(prev.shops?.[sh]?.carts_created)||0),0):0;
-  const prevCA = prev?shops.reduce((s,sh)=>s+(parseFloat(prev.shops?.[sh]?.carts_abandoned)||0),0):0;
-  const globalAbandon = totalCC>0?(totalCA/totalCC*100).toFixed(1):'0';
-  const prevAbandon = prevCC>0?(prevCA/prevCC*100).toFixed(1):'0';
-
   document.getElementById('globalCards').innerHTML = `
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,totP('transactions')))}</div></div>
-      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div>${dHtml(delta(totalRev,totP('revenue')))}</div></div>
-      <div class="stat-card ${isAlert(globalCvr,prevCvr)?'alert':''}"><div class="sc-label">CVR Global ${isAlert(globalCvr,prevCvr)?'<span class="alert-badge">⚠ chute</span>':''}</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div></div>
-      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${dHtml(delta(totalSess,totP('sessions')))}</div></div>
-      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${amz||'—'}</div><div>${dHtml(delta(amz,prevAmz))}</div></div>
+      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,tot(prev,'transactions')))}</div>${n1CardHtml(totalTx,n1Tx,fmt(n1Tx))}</div>
+      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div>${dHtml(delta(totalRev,tot(prev,'revenue')))}</div>${n1CardHtml(totalRev,n1Rev,fmtCur(n1Rev,'EU'))}</div>
+      <div class="stat-card ${isAlert(globalCvr,prevCvr)?'alert':''}"><div class="sc-label">CVR Global ${isAlert(globalCvr,prevCvr)?'<span class="alert-badge">⚠ chute</span>':''}</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div>${n1 ? n1CardHtml(globalCvr,n1Cvr,n1Cvr+'%') : ''}</div>
+      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${dHtml(delta(totalSess,tot(prev,'sessions')))}</div>${n1CardHtml(totalSess,n1Sess,fmt(n1Sess))}</div>
+      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${amz||'—'}</div><div>${dHtml(delta(amz,prevAmz))}</div>${n1 ? n1CardHtml(amz,n1Amz,fmt(n1Amz)) : ''}</div>
     </div>
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
       ${shopCards}
-      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div>${dHtml(delta(globalAbandon,prevAbandon),true)}</div></div>
+      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div>${dHtml(delta(globalAbandon,prevAbandon),true)}</div>${n1 ? n1CardHtml(globalAbandon,n1Abandon,n1Abandon+'%',true) : ''}</div>
     </div>`;
 }
 
@@ -822,6 +944,7 @@ function selectPrestaShop(shop, el) {
 function renderPresta() {
   const entry = getEntry(currentWeek);
   const prev = getPrev(currentWeek);
+  const n1 = showN1 ? getN1Entry(currentWeek) : null;
   const sh = currentPrestaShop;
   const isAll = sh==='ALL';
   if (!entry) { document.getElementById('prestaKpis').innerHTML='<div class="loading-bar">Aucune donnée.</div>'; return; }
@@ -833,46 +956,55 @@ function renderPresta() {
   if (isAll) {
     const tot = f => shops.reduce((s,shop)=>s+(parseFloat(entry.shops?.[shop]?.[f])||0),0);
     const totP = f => prev?shops.reduce((s,shop)=>s+(parseFloat(prev.shops?.[shop]?.[f])||0),0):null;
+    const totN1 = f => n1?shops.reduce((s,shop)=>s+(parseFloat(n1.shops?.[shop]?.[f])||0),0):null;
     const tx=tot('transactions'),rev=tot('revenue'),sess=tot('sessions'),cc=tot('carts_created'),ca=tot('carts_abandoned');
     const cvr = sess>0?(tx/sess*100).toFixed(2):'0';
     kpis = [
-      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,totP('sessions')))},
-      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,totP('transactions')))},
-      {l:'CA Total',v:fmtCur(rev,'EU'),s:dHtml(delta(rev,totP('revenue')))},
-      {l:'CVR',v:cvr+'%',s:''},
-      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,totP('carts_created')))},
-      {l:'Paniers abandonnés',v:fmt(ca),s:''},
+      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,totP('sessions'))),n1:totN1('sessions')!==null?fmt(totN1('sessions')):null,rawv:sess,rawn1:totN1('sessions')},
+      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,totP('transactions'))),n1:totN1('transactions')!==null?fmt(totN1('transactions')):null,rawv:tx,rawn1:totN1('transactions')},
+      {l:'CA Total',v:fmtCur(rev,'EU'),s:dHtml(delta(rev,totP('revenue'))),n1:totN1('revenue')!==null?fmtCur(totN1('revenue'),'EU'):null,rawv:rev,rawn1:totN1('revenue')},
+      {l:'CVR',v:cvr+'%',s:'',n1:null},
+      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,totP('carts_created'))),n1:totN1('carts_created')!==null?fmt(totN1('carts_created')):null,rawv:cc,rawn1:totN1('carts_created')},
+      {l:'Paniers abandonnés',v:fmt(ca),s:'',n1:totN1('carts_abandoned')!==null?fmt(totN1('carts_abandoned')):null,rawv:ca,rawn1:totN1('carts_abandoned')},
     ];
-    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card global"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div>${k.n1!==null?n1KpiHtml(k.rawv,k.rawn1):''}</div>`).join('');
     document.getElementById('prestaFunnel').innerHTML='';
     // Top products global
     if (bsPeriod === 0) {
       const allProds = shops.map(sh => entry.products?.[sh] || '').filter(Boolean).join('||');
-      renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917');
+      const n1Prods = n1 ? shops.map(sh => n1.products?.[sh] || '').filter(Boolean).join('||') : null;
+      renderTopProducts('prestaTopProducts', getTopProducts(allProds, 4), '#1a1917', n1Prods ? getTopProducts(n1Prods, 4) : null);
     } else {
       const bsEntries = getPeriod(bsPeriod);
-      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, 'ALL', 4), '#1a1917');
+      const n1bsEntries = showN1 ? getN1Period(bsEntries) : null;
+      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, 'ALL', 4), '#1a1917', n1bsEntries ? getTopProductsMulti(n1bsEntries, 'ALL', 4) : null);
     }
   } else {
     const d = entry.shops?.[sh]; if (!d) { document.getElementById('prestaKpis').innerHTML=''; document.getElementById('prestaFunnel').innerHTML=''; return; }
     const p = prev?.shops?.[sh];
+    const n1d = n1?.shops?.[sh];
     const sess=parseFloat(d.sessions)||0, tx=parseFloat(d.transactions)||0, rev=parseFloat(d.revenue)||0;
     const atc=parseFloat(d.add_to_cart)||0, cc=parseFloat(d.carts_created)||0, ca=parseFloat(d.carts_abandoned)||0;
     const cls=sh.toLowerCase(), color=shopColors[sh];
     kpis = [
-      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,p?.sessions))},
-      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,p?.transactions))},
-      {l:'CA',v:fmtCur(rev,sh),s:dHtml(delta(rev,p?.revenue))},
-      {l:'CVR',v:(d.cvr||'0')+'%',s:dHtml(delta(d.cvr,p?.cvr))},
-      {l:'AOV',v:fmtCur(d.aov,sh),s:dHtml(delta(d.aov,p?.aov))},
-      {l:'Add to Cart',v:fmt(atc),s:d.atcRate?(d.atcRate+'%'):''},
-      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,p?.carts_created))},
-      {l:'Paniers abandonnés',v:fmt(ca),s:dHtml(delta(ca,p?.carts_abandoned))},
-      {l:'Abandon %',v:(d.abandon||'0')+'%',s:dHtml(delta(d.abandon,p?.abandon),true)},
+      {l:'Sessions',v:fmt(sess),s:dHtml(delta(sess,p?.sessions)),rawv:sess,rawn1:n1d?parseFloat(n1d.sessions):null},
+      {l:'Commandes',v:fmt(tx),s:dHtml(delta(tx,p?.transactions)),rawv:tx,rawn1:n1d?parseFloat(n1d.transactions):null},
+      {l:'CA',v:fmtCur(rev,sh),s:dHtml(delta(rev,p?.revenue)),rawv:rev,rawn1:n1d?parseFloat(n1d.revenue):null,fmtFn:(v)=>fmtCur(v,sh)},
+      {l:'CVR',v:(d.cvr||'0')+'%',s:dHtml(delta(d.cvr,p?.cvr)),rawv:d.cvr,rawn1:n1d?.cvr,pct:true},
+      {l:'AOV',v:fmtCur(d.aov,sh),s:dHtml(delta(d.aov,p?.aov)),rawv:d.aov,rawn1:n1d?.aov,fmtFn:(v)=>fmtCur(v,sh)},
+      {l:'Add to Cart',v:fmt(atc),s:d.atcRate?(d.atcRate+'%'):'',rawv:atc,rawn1:n1d?parseFloat(n1d.add_to_cart):null},
+      {l:'Paniers créés',v:fmt(cc),s:dHtml(delta(cc,p?.carts_created)),rawv:cc,rawn1:n1d?parseFloat(n1d.carts_created):null},
+      {l:'Paniers abandonnés',v:fmt(ca),s:dHtml(delta(ca,p?.carts_abandoned)),rawv:ca,rawn1:n1d?parseFloat(n1d.carts_abandoned):null},
+      {l:'Abandon %',v:(d.abandon||'0')+'%',s:dHtml(delta(d.abandon,p?.abandon),true),rawv:d.abandon,rawn1:n1d?.abandon,pct:true,inv:true},
     ];
-    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card ${cls}"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+    const n1KpiLine = (k) => {
+      if (!n1d || k.rawn1===null || k.rawn1===undefined) return '';
+      const displayVal = k.fmtFn ? k.fmtFn(k.rawn1) : k.pct ? k.rawn1+'%' : fmt(k.rawn1);
+      return n1KpiHtml(k.rawv, k.rawn1, k.inv);
+    };
+    document.getElementById('prestaKpis').innerHTML = kpis.map(k=>`<div class="kpi-card ${cls}"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div>${n1KpiLine(k)}</div>`).join('');
 
-    // Funnel: Sessions → Paniers créés → Paniers abandonnés → Commandes
+    // Funnel
     const funnelMax = sess;
     const fdata = [
       {label:'Sessions', val:sess, pct:100},
@@ -882,10 +1014,12 @@ function renderPresta() {
     ];
     if (bsPeriod === 0) {
       const shopProds = entry.products?.[sh] || '';
-      renderTopProducts('prestaTopProducts', getTopProducts(shopProds, 4), shopColors[sh]);
+      const n1Prods = n1d ? (n1.products?.[sh] || '') : null;
+      renderTopProducts('prestaTopProducts', getTopProducts(shopProds, 4), shopColors[sh], n1Prods ? getTopProducts(n1Prods, 4) : null);
     } else {
       const bsEntries = getPeriod(bsPeriod);
-      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, sh, 4), shopColors[sh]);
+      const n1bsEntries = showN1 ? getN1Period(bsEntries) : null;
+      renderTopProductsMulti('prestaTopProducts', getTopProductsMulti(bsEntries, sh, 4), shopColors[sh], n1bsEntries ? getTopProductsMulti(n1bsEntries, sh, 4) : null);
     }
     document.getElementById('prestaFunnel').innerHTML = `
       <div class="funnel-card">
@@ -900,18 +1034,31 @@ function renderPresta() {
       </div>`;
   }
 
-  // Charts
+  // Charts with N-1
   const sorted = getPeriod(prestaChartPeriod);
+  const n1sorted = showN1 ? getN1Period(sorted) : [];
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   if (isAll) {
     const cvrD = sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
     const abD = sorted.map(h=>{const cc=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_created)||0),0);const ca=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_abandoned)||0),0);return cc>0?parseFloat((ca/cc*100).toFixed(1)):null;});
-    mkChart('chartCvr','line',labels,[{label:'CVR %',data:cvrD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
-    mkChart('chartAbandon','line',labels,[{label:'Abandon %',data:abD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+    const cvrN1 = n1sorted.map(h=>{const t=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0);const se=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.sessions)||0),0);return se>0?parseFloat((t/se*100).toFixed(2)):null;});
+    const abN1 = n1sorted.map(h=>{const cc=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_created)||0),0);const ca=shops.reduce((s,sh)=>s+(parseFloat(h.shops?.[sh]?.carts_abandoned)||0),0);return cc>0?parseFloat((ca/cc*100).toFixed(1)):null;});
+    const dsCvr = [{label:'CVR %',data:cvrD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}];
+    const dsAb = [{label:'Abandon %',data:abD,borderColor:'#1a1917',backgroundColor:'#1a191722',tension:0.3,fill:true,borderWidth:2,pointRadius:4}];
+    if (showN1 && cvrN1.length) dsCvr.push({label:'N-1 CVR %',data:cvrN1,borderColor:'#1a1917',borderDash:[4,3],tension:0.3,fill:false,borderWidth:1.5,pointRadius:2});
+    if (showN1 && abN1.length) dsAb.push({label:'N-1 Abandon %',data:abN1,borderColor:'#1a1917',borderDash:[4,3],tension:0.3,fill:false,borderWidth:1.5,pointRadius:2});
+    mkChart('chartCvr','line',labels,dsCvr);
+    mkChart('chartAbandon','line',labels,dsAb);
   } else {
     const color=shopColors[sh];
-    mkChart('chartCvr','line',labels,[{label:'CVR %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.cvr)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
-    mkChart('chartAbandon','line',labels,[{label:'Abandon %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.abandon)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+    const dsCvr = [{label:'CVR %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.cvr)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}];
+    const dsAb = [{label:'Abandon %',data:sorted.map(h=>parseFloat(h.shops?.[sh]?.abandon)||null),borderColor:color,backgroundColor:color+'22',tension:0.3,fill:true,borderWidth:2,pointRadius:4}];
+    if (showN1 && n1sorted.length) {
+      dsCvr.push({label:'N-1 CVR %',data:n1sorted.map(h=>parseFloat(h.shops?.[sh]?.cvr)||null),borderColor:color,borderDash:[4,3],tension:0.3,fill:false,borderWidth:1.5,pointRadius:2});
+      dsAb.push({label:'N-1 Abandon %',data:n1sorted.map(h=>parseFloat(h.shops?.[sh]?.abandon)||null),borderColor:color,borderDash:[4,3],tension:0.3,fill:false,borderWidth:1.5,pointRadius:2});
+    }
+    mkChart('chartCvr','line',labels,dsCvr);
+    mkChart('chartAbandon','line',labels,dsAb);
   }
 }
 
@@ -932,10 +1079,11 @@ function setAmzPeriod(n, el) {
 function renderAmazon() {
   const entry = getEntry(currentWeek);
   const prev = getPrev(currentWeek);
+  const n1 = showN1 ? getN1Entry(currentWeek) : null;
   const total = entry?.amazon?.orders||0;
   const prevTotal = prev?.amazon?.orders||0;
+  const n1Total = n1?.amazon?.orders||0;
 
-  // Estimation USCA/EUUK split basée sur ratio transactions Presta
   const usca_tx = (parseFloat(entry?.shops?.US?.transactions)||0)+(parseFloat(entry?.shops?.CA?.transactions)||0);
   const euuk_tx = (parseFloat(entry?.shops?.EU?.transactions)||0)+(parseFloat(entry?.shops?.UK?.transactions)||0);
   const total_tx = usca_tx+euuk_tx;
@@ -946,22 +1094,31 @@ function renderAmazon() {
   const prev_ttx = prev_usca_tx+prev_euuk_tx;
   const prev_usca_amz = prev&&prev_ttx>0?Math.round(prevTotal*prev_usca_tx/prev_ttx):Math.round((prevTotal||0)*0.6);
   const prev_euuk_amz = Math.max(0,(prevTotal||0)-prev_usca_amz);
-  // Estimate Amazon CA = amazon orders × avg AOV across shops
+
+  // N-1 split
+  const n1_usca_tx = n1?(parseFloat(n1.shops?.US?.transactions)||0)+(parseFloat(n1.shops?.CA?.transactions)||0):0;
+  const n1_euuk_tx = n1?(parseFloat(n1.shops?.EU?.transactions)||0)+(parseFloat(n1.shops?.UK?.transactions)||0):0;
+  const n1_ttx = n1_usca_tx+n1_euuk_tx;
+  const n1_usca = n1&&n1_ttx>0?Math.round(n1Total*n1_usca_tx/n1_ttx):Math.round(n1Total*0.6);
+  const n1_euuk = Math.max(0,n1Total-n1_usca);
+
   const avgAOV = shops.reduce((s,sh)=>s+(parseFloat(entry?.shops?.[sh]?.aov)||0),0) / shops.filter(sh=>parseFloat(entry?.shops?.[sh]?.aov)>0).length || 0;
   const amzCA = Math.round(total * avgAOV);
   const prevAvgAOV = prev ? shops.reduce((s,sh)=>s+(parseFloat(prev?.shops?.[sh]?.aov)||0),0) / shops.filter(sh=>parseFloat(prev?.shops?.[sh]?.aov)>0).length : 0;
   const prevAmzCA = Math.round(prevTotal * (prevAvgAOV||avgAOV));
+  const n1AvgAOV = n1 ? shops.reduce((s,sh)=>s+(parseFloat(n1.shops?.[sh]?.aov)||0),0) / shops.filter(sh=>parseFloat(n1?.shops?.[sh]?.aov)>0).length : 0;
+  const n1AmzCA = Math.round(n1Total * (n1AvgAOV||avgAOV));
 
   document.getElementById('amazonCards').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div></div>
-    <div class="stat-card"><div class="sc-label">CA Amazon <span style="font-size:9px;color:var(--muted);font-weight:400">est.</span></div><div class="sc-value">${amzCA?'€'+Math.round(amzCA).toLocaleString('fr-FR'):'—'}</div><div class="sc-delta">${dHtml(delta(amzCA,prevAmzCA))}</div></div>
-    <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="color:var(--us)">${usca_amz||'—'}</div><div class="sc-delta">Amazon.com ${dHtml(delta(usca_amz,prev_usca_amz))}</div></div>
-    <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="color:var(--eu)">${euuk_amz||'—'}</div><div class="sc-delta">Amazon.eu ${dHtml(delta(euuk_amz,prev_euuk_amz))}</div></div>`;
+    <div class="stat-card"><div class="sc-label">Total Amazon</div><div class="sc-value orange">${total||'—'}</div><div>${dHtml(delta(total,prevTotal))}</div>${n1 ? n1CardHtml(total,n1Total,fmt(n1Total)) : ''}</div>
+    <div class="stat-card"><div class="sc-label">CA Amazon <span style="font-size:9px;color:var(--muted);font-weight:400">est.</span></div><div class="sc-value">${amzCA?'€'+Math.round(amzCA).toLocaleString('fr-FR'):'—'}</div><div class="sc-delta">${dHtml(delta(amzCA,prevAmzCA))}</div>${n1 ? n1CardHtml(amzCA,n1AmzCA,'€'+Math.round(n1AmzCA).toLocaleString('fr-FR')) : ''}</div>
+    <div class="stat-card"><div class="sc-label">US + CA</div><div class="sc-value" style="color:var(--us)">${usca_amz||'—'}</div><div class="sc-delta">Amazon.com ${dHtml(delta(usca_amz,prev_usca_amz))}</div>${n1 ? n1CardHtml(usca_amz,n1_usca,fmt(n1_usca)) : ''}</div>
+    <div class="stat-card"><div class="sc-label">EU + UK</div><div class="sc-value" style="color:var(--eu)">${euuk_amz||'—'}</div><div class="sc-delta">Amazon.eu ${dHtml(delta(euuk_amz,prev_euuk_amz))}</div>${n1 ? n1CardHtml(euuk_amz,n1_euuk,fmt(n1_euuk)) : ''}</div>`;
 
   const sorted = getPeriod(amzPeriod);
+  const n1sorted = showN1 ? getN1Period(sorted) : [];
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   const totData = sorted.map(h=>h.amazon?.orders||0);
-  // Approx split based on ratio US/EU shops transactions
   const uscaData = sorted.map(h=>{
     const us=(parseFloat(h.shops?.US?.transactions)||0)+(parseFloat(h.shops?.CA?.transactions)||0);
     const eu=(parseFloat(h.shops?.EU?.transactions)||0)+(parseFloat(h.shops?.UK?.transactions)||0);
@@ -969,17 +1126,34 @@ function renderAmazon() {
     return tot>0?Math.round(amz*us/tot):Math.round(amz*0.6);
   });
   const euukData = totData.map((t,i)=>Math.max(0,t-uscaData[i]));
+  const n1totData = n1sorted.map(h=>h.amazon?.orders||0);
+  const n1uscaData = n1sorted.map(h=>{
+    const us=(parseFloat(h.shops?.US?.transactions)||0)+(parseFloat(h.shops?.CA?.transactions)||0);
+    const eu=(parseFloat(h.shops?.EU?.transactions)||0)+(parseFloat(h.shops?.UK?.transactions)||0);
+    const tot=us+eu; const amz=h.amazon?.orders||0;
+    return tot>0?Math.round(amz*us/tot):Math.round(amz*0.6);
+  });
+  const n1euukData = n1totData.map((t,i)=>Math.max(0,t-(n1uscaData[i]||0)));
 
-  let mainData, mainColor;
-  if (currentAmzFilter==='USCA'){mainData=uscaData;mainColor='#F15A29';}
-  else if (currentAmzFilter==='EUUK'){mainData=euukData;mainColor='#4a9eff';}
-  else{mainData=totData;mainColor='#1a1917';}
+  let mainData, mainColor, n1mainData;
+  if (currentAmzFilter==='USCA'){mainData=uscaData;mainColor='#F15A29';n1mainData=n1uscaData;}
+  else if (currentAmzFilter==='EUUK'){mainData=euukData;mainColor='#4a9eff';n1mainData=n1euukData;}
+  else{mainData=totData;mainColor='#1a1917';n1mainData=n1totData;}
 
-  mkChart('chartAmzMain','bar',labels,[{label:'Commandes',data:mainData,backgroundColor:mainColor+'88',borderColor:mainColor,borderWidth:1,borderRadius:4}]);
-  mkChart('chartAmzSplit','bar',labels,[
+  const dsMain = [{label:'Commandes',data:mainData,backgroundColor:mainColor+'88',borderColor:mainColor,borderWidth:1,borderRadius:4}];
+  if (showN1 && n1mainData.length) dsMain.push({label:'N-1',data:n1mainData,backgroundColor:mainColor+'33',borderColor:mainColor,borderWidth:1,borderRadius:4,borderDash:[4,3]});
+
+  const dsSplit = [
     {label:'US+CA',data:uscaData,backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4},
     {label:'EU+UK',data:euukData,backgroundColor:'#4a9eff88',borderColor:'#4a9eff',borderWidth:1,borderRadius:4},
-  ],{},true);
+  ];
+  if (showN1 && n1uscaData.length) {
+    dsSplit.push({label:'N-1 US+CA',data:n1uscaData,backgroundColor:'#F15A2933',borderColor:'#F15A29',borderWidth:1,borderRadius:4,borderDash:[4,3]});
+    dsSplit.push({label:'N-1 EU+UK',data:n1euukData,backgroundColor:'#4a9eff33',borderColor:'#4a9eff',borderWidth:1,borderRadius:4,borderDash:[4,3]});
+  }
+
+  mkChart('chartAmzMain','bar',labels,dsMain);
+  mkChart('chartAmzSplit','bar',labels,dsSplit,{},true);
 }
 
 // ── EVOLUTION ──
@@ -996,26 +1170,43 @@ function renderEvoGlobalCards(sorted) {
   const totalAmz = sorted.reduce((s,h)=>s+(h.amazon?.orders||0), 0);
   const globalCvr = totalSess>0 ? (totalTx/totalSess*100).toFixed(2) : '0';
   const globalAbandon = totalCC>0 ? (totalCA/totalCC*100).toFixed(1) : '0';
+
+  // N-1
+  const n1sorted = showN1 ? getN1Period(sorted) : [];
+  const n1Tx = n1sorted.reduce((s,h)=>s+tot('transactions',h),0);
+  const n1Rev = n1sorted.reduce((s,h)=>s+tot('revenue',h),0);
+  const n1Sess = n1sorted.reduce((s,h)=>s+tot('sessions',h),0);
+  const n1CC = n1sorted.reduce((s,h)=>s+tot('carts_created',h),0);
+  const n1CA = n1sorted.reduce((s,h)=>s+tot('carts_abandoned',h),0);
+  const n1Amz = n1sorted.reduce((s,h)=>s+(h.amazon?.orders||0),0);
+  const n1Cvr = n1Sess>0?(n1Tx/n1Sess*100).toFixed(2):'0';
+  const n1Abandon = n1CC>0?(n1CA/n1CC*100).toFixed(1):'0';
+  const hasN1 = showN1 && n1sorted.length > 0;
+
   const shopCards = shopsFilter.map(sh => {
     const rev = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.revenue)||0), 0);
     const tx = sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0), 0);
+    const n1r = hasN1 ? n1sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.revenue)||0),0) : null;
+    const n1t = hasN1 ? n1sorted.reduce((s,h)=>s+(parseFloat(h.shops?.[sh]?.transactions)||0),0) : null;
     return `<div class="stat-card">
       <div class="sc-label" style="color:${shopColors[sh]};font-weight:700">${sh}</div>
       <div class="sc-value" style="font-size:22px">${fmtCur(rev,sh)}</div>
       <div class="sc-delta">${tx} cmd${tx>1?'s':''}</div>
+      ${hasN1 && n1r!==null ? n1CardHtml(rev,n1r,fmtCur(n1r,sh)) : ''}
     </div>`;
   }).join('');
+
   el.innerHTML = `
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div class="sc-delta">sur la période</div></div>
-      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div class="sc-delta">sur la période</div></div>
-      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div class="sc-delta">moy. période</div></div>
-      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div class="sc-delta">sur la période</div></div>
-      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${totalAmz||'—'}</div><div class="sc-delta">sur la période</div></div>
+      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalTx,n1Tx,fmt(n1Tx)):''}</div>
+      <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalRev,n1Rev,fmtCur(n1Rev,'EU')):''}</div>
+      <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div class="sc-delta">moy. période</div>${hasN1?n1CardHtml(globalCvr,n1Cvr,n1Cvr+'%'):''}</div>
+      <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalSess,n1Sess,fmt(n1Sess)):''}</div>
+      <div class="stat-card"><div class="sc-label">Amazon orders</div><div class="sc-value">${totalAmz||'—'}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalAmz,n1Amz,fmt(n1Amz)):''}</div>
     </div>
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
       ${shopCards}
-      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div class="sc-delta">moy. période</div></div>
+      <div class="stat-card"><div class="sc-label">Abandon panier global</div><div class="sc-value">${globalAbandon}%</div><div class="sc-delta">moy. période</div>${hasN1?n1CardHtml(globalAbandon,n1Abandon,n1Abandon+'%',true):''}</div>
     </div>`;
 }
 
@@ -1034,15 +1225,31 @@ function selectEvoShop(shop, el) {
 function renderEvolution() {
   const sorted = getPeriod(evoPeriod);
   const n = sorted.length;
-  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n>1?'s':''}`;  renderEvoGlobalCards(sorted);
+  document.getElementById('evoTitle').textContent = `Évolution — ${n} semaine${n>1?'s':''}`;
+  renderEvoGlobalCards(sorted);
+  updateN1Button();
   const labels = sorted.map(h=>h.week.replace(/\d{4}-/,''));
   const shopsShow = currentEvoShop==='ALL' ? shops : [currentEvoShop];
+  const n1sorted = showN1 ? getN1Period(sorted) : [];
 
-  const ds = field => shopsShow.map(sh=>({
-    label:sh, data:sorted.map(h=>{const v=parseFloat(h.shops?.[sh]?.[field]);return isNaN(v)?null:v;}),
-    borderColor:shopColors[sh], backgroundColor:shopColors[sh]+'33',
-    tension:0.3, fill:false, borderWidth:2, pointRadius:3
-  }));
+  const ds = field => {
+    const main = shopsShow.map(sh=>({
+      label:sh, data:sorted.map(h=>{const v=parseFloat(h.shops?.[sh]?.[field]);return isNaN(v)?null:v;}),
+      borderColor:shopColors[sh], backgroundColor:shopColors[sh]+'33',
+      tension:0.3, fill:false, borderWidth:2, pointRadius:3
+    }));
+    if (showN1 && n1sorted.length) {
+      shopsShow.forEach(sh => {
+        main.push({
+          label:`N-1 ${sh}`,
+          data: n1sorted.map(h=>{const v=parseFloat(h.shops?.[sh]?.[field]);return isNaN(v)?null:v;}),
+          borderColor:shopColors[sh], backgroundColor:shopColors[sh]+'11',
+          borderDash:[4,3], tension:0.3, fill:false, borderWidth:1.5, pointRadius:2
+        });
+      });
+    }
+    return main;
+  };
 
   mkChart('evoCA','line',labels,ds('revenue'));
   mkChart('evoOrders','line',labels,ds('transactions'));
@@ -1051,7 +1258,12 @@ function renderEvolution() {
   mkChart('evoCartsCreated','line',labels,ds('carts_created'));
   mkChart('evoAbandon','line',labels,ds('abandon'));
   mkChart('evoAtcRate','line',labels,ds('atcRate'));
-  mkChart('evoAmazon','bar',labels,[{label:'Amazon',data:sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4}]);
+
+  // Amazon
+  const dsAmz = [{label:'Amazon',data:sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2988',borderColor:'#F15A29',borderWidth:1,borderRadius:4}];
+  if (showN1 && n1sorted.length) dsAmz.push({label:'N-1 Amazon',data:n1sorted.map(h=>h.amazon?.orders||0),backgroundColor:'#F15A2933',borderColor:'#F15A29',borderWidth:1,borderRadius:4,borderDash:[4,3]});
+  mkChart('evoAmazon','bar',labels,dsAmz);
+
   // Amazon CA estimated
   const amzCAData = sorted.map(h => {
     const orders = h.amazon?.orders || 0;
@@ -1059,7 +1271,17 @@ function renderEvolution() {
     const avgAov = aovVals.length ? aovVals.reduce((s,v)=>s+v,0)/aovVals.length : 0;
     return Math.round(orders * avgAov);
   });
-  mkChart('evoAmazonCA','line',labels,[{label:'CA Amazon est.',data:amzCAData,borderColor:'#F15A29',backgroundColor:'#F15A2922',tension:0.3,fill:true,borderWidth:2,pointRadius:4}]);
+  const dsAmzCA = [{label:'CA Amazon est.',data:amzCAData,borderColor:'#F15A29',backgroundColor:'#F15A2922',tension:0.3,fill:true,borderWidth:2,pointRadius:4}];
+  if (showN1 && n1sorted.length) {
+    const n1amzCAData = n1sorted.map(h => {
+      const orders = h.amazon?.orders || 0;
+      const aovVals = shops.map(sh=>parseFloat(h.shops?.[sh]?.aov)||0).filter(v=>v>0);
+      const avgAov = aovVals.length ? aovVals.reduce((s,v)=>s+v,0)/aovVals.length : 0;
+      return Math.round(orders * avgAov);
+    });
+    dsAmzCA.push({label:'N-1 CA Amazon',data:n1amzCAData,borderColor:'#F15A29',backgroundColor:'#F15A2911',borderDash:[4,3],tension:0.3,fill:false,borderWidth:1.5,pointRadius:2});
+  }
+  mkChart('evoAmazonCA','line',labels,dsAmzCA);
 
   renderHistory();
 }
@@ -1120,12 +1342,59 @@ function mkChart(id, type, labels, datasets, extra={}, stacked=false) {
   });
 }
 
+function renderN1Summary() {
+  const el = document.getElementById('evoN1Summary');
+  if (!el) return;
+  if (!showN1) {
+    el.innerHTML = `<div style="color:var(--muted2);font-size:12px;padding:12px 0;font-style:italic">Activez le bouton <strong>N-1</strong> dans le header pour comparer avec l'année précédente.</div>`;
+    return;
+  }
+  const sorted = getPeriod(evoPeriod);
+  const n1sorted = getN1Period(sorted);
+  if (!n1sorted.length) {
+    el.innerHTML = `<div style="color:var(--muted2);font-size:12px;padding:12px 0;font-style:italic">Aucune donnée N-1 disponible pour cette période.</div>`;
+    return;
+  }
+  const shopsFilter = currentEvoShop==='ALL' ? shops : [currentEvoShop];
+  const tot = (arr, f) => arr.reduce((s,h)=>s+shopsFilter.reduce((ss,sh)=>ss+(parseFloat(h.shops?.[sh]?.[f])||0),0),0);
+  const metrics = [
+    {l:'CA',cur:tot(sorted,'revenue'),n1:tot(n1sorted,'revenue'),fmt:(v)=>fmtCur(v,'EU')},
+    {l:'Commandes',cur:tot(sorted,'transactions'),n1:tot(n1sorted,'transactions'),fmt:(v)=>fmt(v)},
+    {l:'Sessions',cur:tot(sorted,'sessions'),n1:tot(n1sorted,'sessions'),fmt:(v)=>fmt(v)},
+    {l:'Amazon',cur:sorted.reduce((s,h)=>s+(h.amazon?.orders||0),0),n1:n1sorted.reduce((s,h)=>s+(h.amazon?.orders||0),0),fmt:(v)=>fmt(v)},
+  ];
+  const rows = metrics.map(m => {
+    const d = delta(m.cur, m.n1);
+    const dh = d !== null ? dHtml(d) : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border)">
+      <span style="font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.08em;font-family:'Oswald',sans-serif;font-weight:500">${m.l}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text)">${m.fmt(m.cur)}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${m.fmt(m.n1)}</span>
+      <span style="font-size:11px">${dh}</span>
+    </div>`;
+  }).join('');
+  const yr = sorted[0]?.week.split('-W')[0];
+  const n1yr = n1sorted[0]?.week.split('-W')[0];
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:10px;color:var(--muted2);font-family:'Oswald',sans-serif;letter-spacing:0.1em;text-transform:uppercase">
+      <span>Métrique</span><span>${yr||'Actuel'}</span><span>${n1yr||'N-1'}</span><span>Δ%</span>
+    </div>
+    ${rows}`;
+}
+
 // ── RENDER ──
 function renderDashboard() {
   renderGlobal();
   renderPresta();
   renderAmazon();
 }
+
+function renderAll() {
+  renderDashboard();
+  if (document.getElementById('page-evolution').classList.contains('active')) renderEvolution();
+  renderN1Summary();
+}
+
 function exportCSV() {
   const headers = ['Semaine','Shop','Sessions','Commandes','CA','CVR%','AOV','Paniers créés','Abandonnés','Abandon%','ATC Rate%'];
   const rows = [headers.join(',')];
@@ -1148,12 +1417,6 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = 'wellputt-kpi.csv'; a.click();
   URL.revokeObjectURL(url);
-}
-
-function renderAll() {
-  renderDashboard();
-  // Re-render evo if active
-  if (document.getElementById('page-evolution').classList.contains('active')) renderEvolution();
 }
 
 // ── INIT ──
