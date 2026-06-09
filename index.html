@@ -915,7 +915,7 @@ function renderGlobal() {
 
   document.getElementById('globalCards').innerHTML = `
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,tot(prev,'transactions')))}</div>${n1CardHtml(totalTx,n1Tx,fmt(n1Tx))}</div>
+      <div class="stat-card"><div class="sc-label">Prestashop orders</div><div class="sc-value orange">${fmt(totalTx)}</div><div>${dHtml(delta(totalTx,tot(prev,'transactions')))}</div>${n1CardHtml(totalTx,n1Tx,fmt(n1Tx))}</div>
       <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div>${dHtml(delta(totalRev,tot(prev,'revenue')))}</div>${n1CardHtml(totalRev,n1Rev,fmtCur(n1Rev,'EU'))}</div>
       <div class="stat-card ${isAlert(globalCvr,prevCvr)?'alert':''}"><div class="sc-label">CVR Global ${isAlert(globalCvr,prevCvr)?'<span class="alert-badge">⚠ chute</span>':''}</div><div class="sc-value">${globalCvr}%</div><div>${dHtml(delta(globalCvr,prevCvr))}</div>${n1 ? n1CardHtml(globalCvr,n1Cvr,n1Cvr+'%') : ''}</div>
       <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div>${dHtml(delta(totalSess,tot(prev,'sessions')))}</div>${n1CardHtml(totalSess,n1Sess,fmt(n1Sess))}</div>
@@ -1198,7 +1198,7 @@ function renderEvoGlobalCards(sorted) {
 
   el.innerHTML = `
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-      <div class="stat-card"><div class="sc-label">Total commandes</div><div class="sc-value orange">${fmt(totalTx)}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalTx,n1Tx,fmt(n1Tx)):''}</div>
+      <div class="stat-card"><div class="sc-label">Prestashop orders</div><div class="sc-value orange">${fmt(totalTx)}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalTx,n1Tx,fmt(n1Tx)):''}</div>
       <div class="stat-card"><div class="sc-label">CA Total</div><div class="sc-value">${fmtCur(totalRev,'EU')}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalRev,n1Rev,fmtCur(n1Rev,'EU')):''}</div>
       <div class="stat-card"><div class="sc-label">CVR Global</div><div class="sc-value">${globalCvr}%</div><div class="sc-delta">moy. période</div>${hasN1?n1CardHtml(globalCvr,n1Cvr,n1Cvr+'%'):''}</div>
       <div class="stat-card"><div class="sc-label">Sessions total</div><div class="sc-value">${fmt(totalSess)}</div><div class="sc-delta">sur la période</div>${hasN1?n1CardHtml(totalSess,n1Sess,fmt(n1Sess)):''}</div>
